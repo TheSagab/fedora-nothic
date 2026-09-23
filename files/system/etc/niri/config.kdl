@@ -12,8 +12,9 @@
 // Full reference: https://github.com/niri-wm/niri/wiki/Configuration:-Introduction
 //
 // Everything below is the upstream niri default configuration, adjusted for
-// this image: foot as the terminal, the Noctalia launcher/panels instead of
-// fuzzel/waybar, Noctalia's lock screen, and Noctalia's key bindings.
+// this image: ghostty as the terminal (with foot on Mod+Shift+T as a fallback),
+// the Noctalia launcher/panels instead of fuzzel/waybar, Noctalia's lock screen,
+// and Noctalia's key bindings.
 
 // ---------------------------------------------------------------------------
 // Input
@@ -252,7 +253,8 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // --- applications and shell surfaces -------------------------------
-    Mod+T hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
+    Mod+T hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
+    Mod+Shift+T hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
     Mod+D hotkey-overlay-title="Launcher: Noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+Space hotkey-overlay-title="Launcher: Noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+S hotkey-overlay-title="Control centre" { spawn-sh "noctalia msg panel-toggle control-center"; }

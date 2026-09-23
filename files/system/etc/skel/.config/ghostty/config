@@ -1,0 +1,25 @@
+# Ghostty configuration.
+# Reference: ghostty +show-config --default --docs
+#
+# ghostty is the terminal bound to Mod+T in the niri configuration. foot is also
+# installed and bound to Mod+Shift+T as a lightweight fallback.
+
+# Launch fish regardless of the account's login shell, so the terminal is fish
+# even for users whose /etc/passwd entry still says bash. The login shell is
+# changed separately (SHELL in /etc/default/useradd for new accounts,
+# `ujust set-default-shell` for existing ones).
+command = /usr/bin/fish
+
+# No client-side decorations: niri draws the window, and the focus ring already
+# marks the active one.
+window-decoration = false
+
+font-family = JetBrains Mono
+font-size = 11
+
+window-padding-x = 10
+window-padding-y = 10
+
+# Prompt marks, cwd reporting and the like for the supported shells. The fish
+# completion package is installed alongside this.
+shell-integration = detect

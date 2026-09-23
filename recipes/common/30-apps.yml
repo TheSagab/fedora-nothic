@@ -13,6 +13,8 @@
 # takes it to ~537 packages and 2 GiB - almost all of it mpv's ffmpeg stack and
 # Thunar's XFCE/gvfs stack. If you would rather keep the image small, drop
 # Thunar, mpv and file-roller here and install those as Flatpaks instead.
+# ghostty adds gtk4 on top of that; if you want the leanest possible image, drop
+# ghostty and keep foot as the only terminal (remember to repoint Mod+T).
 #
 # Note that Thunar hard-requires xfce4-panel, so that comes along too. It is not
 # used for anything (Noctalia owns the bar) - dropping Thunar is the only way to
@@ -24,6 +26,17 @@ modules:
       install-weak-deps: false
       packages:
         # --- terminal, launcher, clipboard ------------------------------
+        # ghostty is the default terminal (Mod+T in the niri config). It comes
+        # from the Terra repository and hard-requires gtk4 and gtk4-layer-shell,
+        # which dnf pulls in. foot stays installed as a lightweight fallback.
+        #
+        # ghostty-shell-integration and ghostty-fish-completion are optional, so
+        # with install-weak-deps: false they have to be named explicitly. The
+        # fish one matters because fish is this image's default shell.
+        - ghostty
+        - ghostty-terminfo
+        - ghostty-shell-integration
+        - ghostty-fish-completion
         - foot
         - fuzzel
         - wl-clipboard
