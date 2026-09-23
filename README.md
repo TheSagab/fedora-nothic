@@ -9,15 +9,21 @@ It is a **niri + Noctalia** desktop instead of GNOME or KDE:
 | --- | --- | --- |
 | [niri](https://github.com/niri-wm/niri) | scrollable-tiling Wayland compositor (the "WM") | Fedora repos |
 | [Noctalia](https://github.com/noctalia-dev/noctalia) | the shell: bar, launcher, notifications, lock screen, wallpaper, control centre, OSDs | Fedora repos (44+) |
+| [noctalia-greeter](https://github.com/noctalia-dev/noctalia-greeter) | the graphical login screen, matched to Noctalia | [Terra](https://terrapkg.com) |
+| [ghostty](https://ghostty.org) | terminal - the default one, with `foot` installed alongside | [Terra](https://terrapkg.com) |
+| greetd | minimal login manager daemon | Fedora repos |
+| [fish](https://fishshell.com) | the default shell | Fedora repos |
 | [mise](https://mise.jdx.dev) | polyglot dev tool / runtime version manager | upstream `jdxcode/mise` COPR |
-| greetd + tuigreet | minimal login manager | Fedora repos |
+
+[Terra](https://terrapkg.com) is added as a package repository in its own right,
+not just to supply those two packages, so you can install more from it later.
 
 Two images are built from this repository:
 
 | Image | Description |
 | --- | --- |
 | `ghcr.io/<you>/sagab-niri` | no GPU driver beyond the in-tree ones |
-| `ghcr.io/<you>/sagab-niri-nvidia` | adds the NVIDIA kernel modules + userspace driver from [ublue-os/akmods](https://github.com/ublue-os/akmods) |
+| `ghcr.io/<you>/sagab-niri-nvidia` | adds the NVIDIA kernel modules + userspace driver from [ublue-os/akmods](https://github.com/ublue-os/akmods), using the **proprietary** modules |
 
 ---
 
@@ -29,9 +35,10 @@ recipes/
   recipe-nvidia.yml          # variant B: NVIDIA driver
   common/                    # modules shared by both variants, run in order
     00-base.yml              # graphics, audio, network, fonts, CLI plumbing
-    10-niri.yml              # niri, greetd, portals, XWayland
+    05-terra.yml             # the Terra package repository
+    10-niri.yml              # niri, greetd + noctalia-greeter, portals, XWayland
     20-noctalia.yml          # Noctalia + its runtime dependencies
-    30-apps.yml              # terminal, launcher, file manager, media
+    30-apps.yml              # terminals, launcher, file manager, media
     40-devtools.yml          # mise + dev CLI tools
     50-files.yml             # copies files/ into the image, installs the justfiles
     60-system.yml            # systemd units, default target, os-release
@@ -42,7 +49,9 @@ files/
   system/                    # copied verbatim onto / of the image
     etc/niri/config.kdl      # the niri configuration (system default)
     etc/greetd/config.toml   # login manager configuration
+    etc/default/useradd      # SHELL=/usr/bin/fish for accounts created later
     etc/skel/.config/...     # defaults for newly created users
+    usr/lib/tmpfiles.d/      # the greeter's state directory
     usr/lib/sysctl.d/        # inotify limits for dev tooling
   justfiles/niri.just        # ujust recipes (ujust niri-info, niri-config, ...)
 disk_config/                 # bootc-image-builder configs for qcow2/ISO output
@@ -145,14 +154,15 @@ download the `sagab-niri-anaconda-iso` artifact. Flash it with
 
 ## Using it
 
-Log in with greetd/tuigreet, pick the niri session, and Noctalia starts with the
-compositor.
+Log in at the noctalia-greeter screen, pick the niri session, and Noctalia starts
+with the compositor.
 
 The most important key bindings (`Mod` is Super):
 
 | Binding | Action |
 | --- | --- |
-| `Mod+T` | terminal (foot) |
+| `Mod+T` | terminal (ghostty) |
+| `Mod+Shift+T` | terminal (foot, the lightweight fallback) |
 | `Mod+D`, `Mod+Space` | Noctalia launcher |
 | `Mod+S` | Noctalia control centre |
 | `Mod+Shift+S` | Noctalia settings |
@@ -166,12 +176,29 @@ The most important key bindings (`Mod` is Super):
 `ujust` helpers:
 
 ```bash
-ujust niri-info          # what is installed, driver state, session units
+ujust niri-info          # what is installed, driver state, login shell, units
 ujust niri-config        # copy /etc/niri/config.kdl to ~/.config/niri/config.kdl
 ujust niri-config-reset  # overwrite your copy with the image default
 ujust noctalia-config    # copy the default Noctalia config into your home
 ujust niri-validate      # check the niri config for errors
+ujust set-default-shell  # change your login shell (defaults to fish)
 ```
+
+### Login screen
+
+**noctalia-greeter** comes from [Terra](https://terrapkg.com). It is a graphical
+greeter: greetd runs `/usr/bin/noctalia-greeter-session`, which starts the
+wlroots compositor bundled inside the greeter and draws the login screen there.
+That is why it needs `wlroots` (Fedora 44 ships 0.20.2, which is what it links
+against) and a real logind session - Fedora's greetd package already provides the
+latter via `pam_systemd.so` in `/usr/lib/pam.d/greetd-greeter`.
+
+Its settings live in `/var/lib/noctalia-greeter/`: `greeter.toml` for admin
+defaults (optional - built-in defaults are used if it is absent) and `sync.toml`,
+which the greeter writes to remember your last session and colour scheme. This
+image creates that directory owned by the `greetd` user via
+`files/system/usr/lib/tmpfiles.d/`. To set defaults, copy the canonical example:
+<https://github.com/noctalia-dev/noctalia-greeter/blob/main/examples/greeter.toml>
 
 ### Configuration
 
@@ -186,9 +213,27 @@ from `/etc/skel`; on an existing account run `ujust noctalia-config`, or just us
 the Settings window. `noctalia config export > my-config.toml` dumps the merged
 config.
 
-**mise** is activated in bash, zsh and fish via `/etc/profile.d/mise.sh` and
-`/etc/fish/conf.d/mise.fish`. Tools are installed per user under
-`~/.local/share/mise`:
+**ghostty** reads `~/.config/ghostty/config`; the image ships one in `/etc/skel`
+that launches fish and turns off client-side decorations.
+
+**fish** reads `~/.config/fish/config.fish`, with system-wide snippets in
+`/etc/fish/conf.d/`.
+
+### Shells
+
+**fish** is the default shell. Three separate things are involved, because a
+login shell lives in `/etc/passwd` on the installed system, not in the image:
+
+* `/etc/default/useradd` has `SHELL=/usr/bin/fish`, so accounts created *after*
+  installation get fish.
+* `ghostty` is configured with `command = /usr/bin/fish`, so the default terminal
+  starts fish regardless of what your login shell says.
+* For an account that already existed, run `ujust set-default-shell` to change its
+  login shell (`ujust set-default-shell /bin/bash` to change it back).
+
+bash and zsh are still installed. **mise** is activated in all three via
+`/etc/profile.d/mise.sh` and `/etc/fish/conf.d/mise.fish`. Tools are installed
+per user under `~/.local/share/mise`:
 
 ```bash
 mise use -g node@24
@@ -198,14 +243,17 @@ mise install
 
 ### NVIDIA variant
 
-The `nvidia-open` kernel modules are used by default, which covers Turing
-(GTX 16xx / RTX 20xx) and newer, and is required for Blackwell (RTX 50xx).
+The **proprietary** kernel modules (`nvidia-driver: nvidia`) are used by default.
+Those cover Maxwell through Ada - GTX 9xx/10xx and RTX 20xx-40xx - and are the
+right choice for the cards people actually still run. They do **not** support
+Blackwell (RTX 50xx) or newer.
 
-For Maxwell, Pascal or Volta (GTX 9xx/10xx, some RTX 20xx), switch to the
-proprietary modules by editing `recipes/nvidia/akmods.yml`:
+For Blackwell and later, switch to the open modules in
+`recipes/nvidia/akmods.yml` - they are the only supported flavour there, and also
+work for Turing and newer:
 
 ```yaml
-nvidia-driver: nvidia   # instead of nvidia-open
+nvidia-driver: nvidia-open   # instead of nvidia
 ```
 
 The module also writes the required kernel arguments
@@ -244,10 +292,16 @@ The recipes are deliberately small and commented - edit them directly.
   check that `noctalia` and `niri` exist for the new release
   (`https://packages.fedoraproject.org/`), and that the `jdxcode/mise` COPR has a
   chroot for it (`https://copr.fedorainfracloud.org/coprs/jdxcode/mise/`).
-  Also confirm `ghcr.io/ublue-os/akmods` publishes a `main-<release>` tag.
-* **A graphical login screen**: replace tuigreet in
-  `files/system/etc/greetd/config.toml` with `gtkgreet` (plus `cage` and
-  `gtk4-layer-shell`), or drop greetd for SDDM.
+  Also confirm `ghcr.io/ublue-os/akmods` publishes a `main-<release>` tag, and
+  that Terra has a `terra<release>` repository with `noctalia-greeter` and
+  `ghostty` in it (<https://repos.fyralabs.com/terra44/repodata/repomd.xml> is
+  the pattern to check).
+* **A different login screen**: the greeter is noctalia-greeter, configured in
+  `files/system/etc/greetd/config.toml`. To go back to a text greeter, install
+  `tuigreet` and set
+  `command = "tuigreet --time --remember --asterisks --cmd niri-session"`;
+  to hand the login screen to SDDM instead, `systemctl disable --now greetd`
+  and `systemctl enable --now sddm`.
 
 ### Adding another variant
 
@@ -266,10 +320,14 @@ for it.
   environment to strip out.
 * **No Quickshell, no Qt/GTK shell**: Noctalia v5 is a native Wayland shell
   written in C++, so there is no Quickshell layer to maintain.
-* **Fedora packages over COPRs**: niri, Noctalia, xwayland-satellite, greetd,
-  tuigreet and everything else except mise come from the official Fedora 44
-  repositories, so they are maintained upstream. The only COPR is mise's, and
-  its repository file is removed again after the build (`cleanup: true`).
+* **Fedora first, then two external repos**: niri, Noctalia, xwayland-satellite,
+  greetd, wlroots and fish come from the official Fedora 44 repositories, so they
+  are maintained upstream. Two things are not in Fedora: mise (upstream
+  `jdxcode/mise` COPR, whose repository file is removed again after the build
+  with `cleanup: true`) and noctalia-greeter plus ghostty, which come from
+  [Terra](https://terrapkg.com). Terra is left enabled so you can install more
+  from it - see `recipes/common/05-terra.yml` for what that means for trust and
+  for package priority.
 * **Weak dependencies off**: keeps the image deterministic and avoids pulling
   in waybar/alacritty/swaylock that niri recommends but Noctalia replaces.
 * **Files go to `/etc`**, not `/usr/etc`: on atomic Fedora the image's `/etc`
@@ -290,6 +348,26 @@ for it.
   `/usr/share/xdg-desktop-portal/portals/gnome-keyring.portal`) to satisfy it.
   Check with `systemctl --user status xdg-desktop-portal` and
   `ls /usr/share/xdg-desktop-portal/portals/`.
+* **The login screen never appears**: the greeter is a graphical client, so it
+  can fail in ways a TUI greeter cannot. Check, in this order:
+
+  ```
+  systemctl status greetd
+  journalctl -u greetd -b
+  ls -l /dev/dri/          # does the greeter have a GPU to render on?
+  ```
+
+  greetd is started by `display-manager.service`, which only exists because
+  `systemctl set-default graphical.target` was run at build time. If
+  `systemctl get-default` says `multi-user.target`, the login screen is
+  correctly absent, not broken. If greetd exits immediately with a message about
+  a missing session wrapper, the file it names is the one in
+  `files/system/etc/greetd/config.toml`.
+* **The greeter appears, then the session dies back to it**: that is niri
+  starting and failing. `journalctl -b -u greetd` shows the session's output,
+  including niri's own errors. The most common cause is a broken
+  `/etc/niri/config.kdl`, which `niri validate -c /etc/niri/config.kdl`
+  diagnoses.
 * **niri starts with an error / ignores the config**: `ujust niri-validate`
   (or `niri validate -c /etc/niri/config.kdl`) prints the parse errors.
 * **`bluebuild build` fails in WSL2 with `remount /, flags: 0x44000: invalid argument`**:
@@ -298,6 +376,40 @@ for it.
   the recipe - even pulling a 1 KiB image fails the same way, under both the
   `overlay` and `vfs` storage drivers. Build on a real Linux host or let GitHub
   Actions do it.
+* **The build fails in the Terra modules**: `05-terra.yml` checks that Terra
+  offers `ghostty` and `noctalia-greeter`, and stops there with a message if it
+  does not, so a repository problem fails early and names itself.
+
+  Terra's repo file does not work unmodified from every network. Its `metalink`
+  advertises the checksum of the current repomd.xml while the mirrors behind it
+  lag by several metadata revisions (five of the six, measured on 2026-09-23),
+  and dnf only tries a couple before giving up:
+
+  ```
+  >>> Downloading successful, but checksum doesn't match. Calculated: 477d949d...
+      Expected: d64287b0... - https://mirror.freedif.org/.../repomd.xml
+  >>> repomd.xml GPG signature verification error: Signing key not found
+  ```
+
+  The second line is a red herring and worth recognising: the signature is
+  fine. `gpg --verify repomd.xml.asc repomd.xml` against
+  `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra44` prints `Good signature from "Terra 44
+  <security@fyralabs.com>"`, with the fingerprint that key file declares, and
+  `repo_gpgcheck=1` passes as soon as dnf has a repomd.xml it accepts. The
+  message only means it never got one, and dnf then reports the last error
+  rather than the first.
+
+  This image therefore ships its own `/etc/yum.repos.d/terra.repo` with `baseurl`
+  pointing at the origin, which is the repomd.xml the metalink checksums and so
+  is always current. Everything else, including `repo_gpgcheck=1`, is unchanged.
+  The comments at the top of that file record the measurements. If you see
+  either error above, check that `files/system/etc/yum.repos.d/terra.repo` is
+  still the file on disk and that no update has left a `terra.repo.rpmnew`
+  beside it.
+
+  If Terra is unreachable the message is `Terra could not be queried. Is
+  repos.fyralabs.com reachable?`; if its metadata loads but yields nothing, it is
+  `Terra returned no packages at all`. Neither is an image problem.
 * **`ujust` has no `Desktop` group**: the justfiles module appends its imports
   to `/usr/share/ublue-os/just/60-custom.just`; check that the file contains the
   import line for `/usr/share/bluebuild/justfiles/niri.just`.
@@ -327,12 +439,14 @@ Nothing below requires touching more than one or two files.
 | --- | --- | --- |
 | Base is Universal Blue's desktop-less image, pinned to Fedora 44 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
 | Image names are `sagab-niri` and `sagab-niri-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
-| Greeter is the **TUI** greeter tuigreet | `files/system/etc/greetd/config.toml` + the `greetd`/`tuigreet` entries in `10-niri.yml` | Swap `command` for `gtkgreet` (add `gtkgreet cage gtk4-layer-shell`), or replace greetd with SDDM |
-| Terminal is `foot` | `30-apps.yml` + the `Mod+T` bind in `niri/config.kdl` | Change both; `alacritty` is what niri's own defaults use |
+| Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
+| Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image (see the weight note in that file) |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
-| NVIDIA driver flavour is `nvidia-open` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia` for Maxwell..Ada |
+| NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
+| Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin instead of the metalink | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
+| **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell` (existing accounts) | See the Shells section above |
 | Noctalia ships a small default config (dark, top bar, overview type-to-launch) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
 | Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
 | Images are signed with your own cosign key | `90-final.yml` + the `SIGNING_SECRET` secret | Comment out the `signing` module to build unsigned while experimenting |
@@ -357,8 +471,14 @@ niri validate -c /etc/niri/config.kdl
 bluebuild validate recipes/recipe.yml
 bluebuild validate recipes/recipe-nvidia.yml
 
-# greetd's greeter flags exist in the packaged tuigreet
-tuigreet --help | grep -E '\-\-cmd|\-\-greeting|\-\-remember|\-\-asterisks|\-\-time'
+# the greeter: greetd runs the session wrapper, not the plain binary
+command -v noctalia-greeter-session
+systemctl cat greetd.service | grep -A1 '\[Install\]'
+
+# Terra is registered, pinned to the origin rather than the metalink, and
+# carries the two packages this image takes from it
+grep -c metalink /etc/yum.repos.d/terra.repo    # expect 0
+dnf repoquery --repo terra noctalia-greeter ghostty
 
 # Noctalia accepts the shipped config keys
 noctalia config validate ~/.config/noctalia/config.toml
@@ -391,11 +511,11 @@ Notes that came out of that verification and are easy to trip over:
 * The greeter launches `niri-session`, which is exactly the `Exec=` in the
   `niri.desktop` that the Fedora niri package ships in
   `/usr/share/wayland-sessions/`.
-* `--remember`/`--remember-session` need the greeter's state directory to be
-  writable. Fedora patches tuigreet to write to `/var/lib/greetd/` and its
-  greetd package creates that directory with the right ownership, so nothing
-  extra is needed - on the *upstream* build it would be `/var/cache/tuigreet`
-  and you would have to create it yourself.
+* noctalia-greeter must be run through `/usr/bin/noctalia-greeter-session`, not
+  as `noctalia-greeter`: the wrapper is what starts its bundled wlroots
+  compositor. Its state directory has to be writable by the `greetd` user, which
+  is why the image ships a tmpfiles.d entry for it - the uid is allocated
+  dynamically at boot, so it cannot be chowned at build time.
 * `install-weak-deps: false` really does emit
   `--setopt=install_weak_deps=False`, so niri's `Recommends` (waybar, alacritty,
   swaylock, fuzzel, the portal backends, wireplumber) are not pulled in behind
