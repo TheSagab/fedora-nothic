@@ -302,7 +302,9 @@ for it.
 ## Re-checking this configuration yourself
 
 The repository was verified against the real Fedora 44 artefacts rather than by
-inspection. On a running system you can repeat each check:
+inspection: the real `niri` binary, the real `bluebuild` CLI, the real module
+implementations, and the real `dnf5` solver. On a running system you can repeat
+most of it:
 
 ```bash
 # the niri config parses and passes niri's full schema validation
@@ -321,6 +323,10 @@ noctalia config validate ~/.config/noctalia/config.toml
 # niri's own portal contract is satisfied
 cat /usr/share/xdg-desktop-portal/niri-portals.conf
 ls /usr/share/xdg-desktop-portal/portals/
+
+# really no GNOME or KDE: niri should be the only compositor and
+# greetd the only display manager
+systemctl list-units --type=service | grep -E 'gdm|sddm|gnome-shell|plasma'
 ```
 
 Notes that came out of that verification and are easy to trip over:
@@ -344,7 +350,21 @@ Notes that came out of that verification and are easy to trip over:
   wants `display-manager.service`, so the greeter is only reachable through it.
 * The `justfiles` module only writes its import into
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
-  on the Universal Blue base); otherwise it falls back to installing `blujust`.
+  on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
+  installing `blujust`.
+* Resolving the full package set with `dnf5` on a minimal Fedora 44 base gives
+  639 packages with **no** `gnome-shell`, `mutter`, `gdm`, `gnome-session`,
+  `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The only `gnome-*`
+  packages are libraries and a keyring, not a desktop: `gnome-desktop3`/
+  `gnome-desktop4` come from `xdg-desktop-portal-gnome` (which niri requires for
+  screencast) and `gnome-keyring` is the Secret portal backend niri's own
+  `niri-portals.conf` asks for.
+* For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-44` and
+  `ghcr.io/ublue-os/base-main:44` both report
+  `ostree.linux = 7.2.6-200.fc44.x86_64`, i.e. the kmod RPMs are built for the
+  exact kernel the base ships. If those ever diverge you get the depsolve error
+  mentioned in Troubleshooting - check `rpm-ostree status`/`bootc status` for the
+  running kernel and compare with the akmods image tag.
 
 ## Links
 

@@ -13,6 +13,10 @@
 # takes it to ~537 packages and 2 GiB - almost all of it mpv's ffmpeg stack and
 # Thunar's XFCE/gvfs stack. If you would rather keep the image small, drop
 # Thunar, mpv and file-roller here and install those as Flatpaks instead.
+#
+# Note that Thunar hard-requires xfce4-panel, so that comes along too. It is not
+# used for anything (Noctalia owns the bar) - dropping Thunar is the only way to
+# get rid of it.
 
 modules:
   - type: dnf
