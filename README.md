@@ -276,9 +276,15 @@ for it.
 * **No sound**: `systemctl --user status pipewire wireplumber`. The units are
   enabled by the packages' systemd presets; if they are missing, run
   `systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service`.
-* **No screen sharing / screen recording**: check that
-  `xdg-desktop-portal-gnome` is installed and that
-  `/usr/share/xdg-desktop-portal/niri-portals.conf` exists.
+* **No screen sharing, screen recording or keyring**: niri ships
+  `/usr/share/xdg-desktop-portal/niri-portals.conf`, which asks for the `gnome`
+  and `gtk` portal backends and for `gnome-keyring` to serve
+  `org.freedesktop.impl.portal.Secret`. This image installs
+  `xdg-desktop-portal-gnome`, `xdg-desktop-portal-gtk` and `gnome-keyring`
+  (the last one ships
+  `/usr/share/xdg-desktop-portal/portals/gnome-keyring.portal`) to satisfy it.
+  Check with `systemctl --user status xdg-desktop-portal` and
+  `ls /usr/share/xdg-desktop-portal/portals/`.
 * **niri starts with an error / ignores the config**: `ujust niri-validate`
   (or `niri validate -c /etc/niri/config.kdl`) prints the parse errors.
 * **`ujust` has no `Desktop` group**: the justfiles module appends its imports
@@ -287,6 +293,45 @@ for it.
 * **Build fails with "Could not depsolve transaction" in the akmods module**:
   upstream `ublue-os/akmods` has not caught up with the current kernel yet.
   Wait for their next build and re-run.
+
+## Re-checking this configuration yourself
+
+The repository was verified against the real Fedora 44 artefacts rather than by
+inspection. On a running system you can repeat each check:
+
+```bash
+# the niri config parses and passes niri's full schema validation
+niri validate -c /etc/niri/config.kdl
+
+# both recipes still satisfy the BlueBuild recipe/module schemas
+bluebuild validate recipes/recipe.yml
+bluebuild validate recipes/recipe-nvidia.yml
+
+# greetd's greeter flags exist in the packaged tuigreet
+tuigreet --help | grep -E '\-\-cmd|\-\-greeting|\-\-remember|\-\-asterisks|\-\-time'
+
+# Noctalia accepts the shipped config keys
+noctalia config validate ~/.config/noctalia/config.toml
+
+# niri's own portal contract is satisfied
+cat /usr/share/xdg-desktop-portal/niri-portals.conf
+ls /usr/share/xdg-desktop-portal/portals/
+```
+
+Notes that came out of that verification and are easy to trip over:
+
+* The greeter launches `niri-session`, which is exactly the `Exec=` in the
+  `niri.desktop` that the Fedora niri package ships in
+  `/usr/share/wayland-sessions/`.
+* `--remember`/`--remember-session` need the greeter's state directory to be
+  writable. Fedora patches tuigreet to write to `/var/lib/greetd/` and its
+  greetd package creates that directory with the right ownership, so nothing
+  extra is needed - on the *upstream* build it would be `/var/cache/tuigreet`
+  and you would have to create it yourself.
+* `install-weak-deps: false` really does emit
+  `--setopt=install_weak_deps=False`, so niri's `Recommends` (waybar, alacritty,
+  swaylock, fuzzel, the portal backends, wireplumber) are not pulled in behind
+  your back. Anything you want must be listed explicitly.
 
 ## Links
 
