@@ -380,36 +380,43 @@ for it.
   offers `ghostty` and `noctalia-greeter`, and stops there with a message if it
   does not, so a repository problem fails early and names itself.
 
-  Terra's repo file does not work unmodified from every network. Its `metalink`
-  advertises the checksum of the current repomd.xml while the mirrors behind it
-  lag by several metadata revisions (five of the six, measured on 2026-09-23),
-  and dnf only tries a couple before giving up:
+  Terra's repo file does not work unmodified here, for two separate reasons, and
+  the image therefore ships its own copy in
+  `files/system/etc/yum.repos.d/terra.repo`:
 
-  ```
-  >>> Downloading successful, but checksum doesn't match. Calculated: 477d949d...
-      Expected: d64287b0... - https://mirror.freedif.org/.../repomd.xml
-  >>> repomd.xml GPG signature verification error: Signing key not found
-  ```
+  1. Its `metalink` advertises the checksum of the current repomd.xml while the
+     mirrors behind it lag by several metadata revisions (five of the six,
+     measured on 2026-09-23), and dnf only tries a couple before giving up:
 
-  The second line is a red herring and worth recognising: the signature is
-  fine. `gpg --verify repomd.xml.asc repomd.xml` against
-  `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra44` prints `Good signature from "Terra 44
-  <security@fyralabs.com>"`, with the fingerprint that key file declares, and
-  `repo_gpgcheck=1` passes as soon as dnf has a repomd.xml it accepts. The
-  message only means it never got one, and dnf then reports the last error
-  rather than the first.
+     ```
+     >>> Downloading successful, but checksum doesn't match. Calculated: 477d949d...
+         Expected: d64287b0... - https://mirror.freedif.org/.../repomd.xml
+     ```
 
-  This image therefore ships its own `/etc/yum.repos.d/terra.repo` with `baseurl`
-  pointing at the origin, which is the repomd.xml the metalink checksums and so
-  is always current. Everything else, including `repo_gpgcheck=1`, is unchanged.
-  The comments at the top of that file record the measurements. If you see
-  either error above, check that `files/system/etc/yum.repos.d/terra.repo` is
-  still the file on disk and that no update has left a `terra.repo.rpmnew`
-  beside it.
+     The repo file points `baseurl` at `repos.fyralabs.com`, which is the origin
+     the metalink checksums and so is always current.
+
+  2. Its `repo_gpgcheck=1` fails in a freshly built rootfs with
+
+     ```
+     >>> repomd.xml GPG signature verification error: Signing key not found
+     ```
+
+     after which dnf treats the repository as offering nothing and you get
+     `No match for argument: ghostty`. The signature is not the problem:
+     `gpg --verify repomd.xml.asc repomd.xml` against
+     `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra44` prints `Good signature from "Terra 44
+     <security@fyralabs.com>"`, with the fingerprint that key file declares. It
+     is about who imported the key: once a dnf command has imported it itself,
+     `repo_gpgcheck=1` starts working, but `rpm --import` alone does not satisfy
+     dnf5 5.4.5.0. The repo file sets `repo_gpgcheck=0` rather than depend on
+     that ordering. Fedora's own repositories do the same, and `gpgcheck=1` is
+     untouched, so every RPM from Terra is still verified against its key.
 
   If Terra is unreachable the message is `Terra could not be queried. Is
   repos.fyralabs.com reachable?`; if its metadata loads but yields nothing, it is
-  `Terra returned no packages at all`. Neither is an image problem.
+  `Terra returned no packages at all`. Neither is an image problem. The comments
+  at the top of the repo file record all of the measurements above.
 * **`ujust` has no `Desktop` group**: the justfiles module appends its imports
   to `/usr/share/ublue-os/just/60-custom.just`; check that the file contains the
   import line for `/usr/share/bluebuild/justfiles/niri.just`.
@@ -445,7 +452,7 @@ Nothing below requires touching more than one or two files.
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image (see the weight note in that file) |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
-| Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin instead of the metalink | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
+| Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
 | **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell` (existing accounts) | See the Shells section above |
 | Noctalia ships a small default config (dark, top bar, overview type-to-launch) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
 | Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
@@ -497,6 +504,12 @@ systemctl get-default
 systemctl show -p Wants --value graphical.target | tr ' ' '\n' | grep display-manager
 readlink -f /etc/systemd/system/display-manager.service
 systemd-analyze verify /usr/lib/systemd/system/greetd.service
+
+# the package set: how heavy it is, and that there is no desktop in it. Feed it
+# every package the recipes/common dnf modules name; this is where the numbers
+# in the Design notes and in 30-apps.yml come from. Run it on a Fedora 44 host.
+dnf5 --installroot=/var/tmp/checkroot --releasever=44 --use-host-config \
+  --assumeno install --setopt=install_weak_deps=False <packages>
 ```
 
 Note that this image has never been built as a container here, so two caveats
@@ -529,13 +542,17 @@ Notes that came out of that verification and are easy to trip over:
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
   on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
   installing `blujust`.
-* Resolving the full package set with `dnf5` on a minimal Fedora 44 base gives
-  639 packages with **no** `gnome-shell`, `mutter`, `gdm`, `gnome-session`,
-  `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The only `gnome-*`
-  packages are libraries and a keyring, not a desktop: `gnome-desktop3`/
-  `gnome-desktop4` come from `xdg-desktop-portal-gnome` (which niri requires for
-  screencast) and `gnome-keyring` is the Secret portal backend niri's own
-  `niri-portals.conf` asks for.
+* Resolving the full package set with `dnf5` against an empty root gives 764
+  packages and ~2 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
+  `gnome-session`, `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The
+  only `gnome-*` packages are libraries and a keyring, not a desktop:
+  `gnome-desktop3`/`gnome-desktop4` come from `xdg-desktop-portal-gnome` (which
+  niri requires for screencast) and `gnome-keyring` is the Secret portal backend
+  niri's own `niri-portals.conf` asks for. Note that ghostty does pull GNOME
+  *libraries* that niri and Noctalia alone do not need - `gtk4`,
+  `gtk4-layer-shell`, `libadwaita` - because it hard-requires gtk4. There is
+  still no GNOME desktop. The command that produced these numbers is under
+  "Re-checking this configuration yourself".
 * For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-44` and
   `ghcr.io/ublue-os/base-main:44` both report
   `ostree.linux = 7.2.6-200.fc44.x86_64`, i.e. the kmod RPMs are built for the

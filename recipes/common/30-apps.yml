@@ -8,13 +8,21 @@
 # Swap any of these for your favourites - just keep the matching key bindings
 # in files/system/etc/niri/config.kdl in sync.
 #
-# Weight warning: this is the heaviest module in the image. On a minimal Fedora
-# base, 20-noctalia resolves to ~346 packages and 1 GiB, and adding this module
-# takes it to ~537 packages and 2 GiB - almost all of it mpv's ffmpeg stack and
-# Thunar's XFCE/gvfs stack. If you would rather keep the image small, drop
-# Thunar, mpv and file-roller here and install those as Flatpaks instead.
-# ghostty adds gtk4 on top of that; if you want the leanest possible image, drop
-# ghostty and keep foot as the only terminal (remember to repoint Mod+T).
+# Weight warning: this is the heaviest module in the image. Resolved against an
+# empty root with `dnf5 --installroot=<dir> --releasever=44 --use-host-config
+# --assumeno install --setopt=install_weak_deps=False`, the modules before this
+# one come to 465 packages and ~1 GiB, and this one takes the total to 662
+# packages and ~2 GiB. Three stacks account for it, measured the same way and
+# each including the base system that package needs, so the figures overlap:
+#
+#   mpv      365 packages, 758 MiB   the ffmpeg stack
+#   Thunar   294 packages, 471 MiB   XFCE and gvfs
+#   ghostty  229 packages, 653 MiB   gtk4, libadwaita, gstreamer, cups, mesa
+#
+# ghostty is in that list because it hard-requires gtk4, which drags the rest in.
+# If you would rather keep the image small, drop Thunar, mpv and file-roller here
+# and install those as Flatpaks instead; for the leanest possible image drop
+# ghostty too and keep foot as the only terminal (remember to repoint Mod+T).
 #
 # Note that Thunar hard-requires xfce4-panel, so that comes along too. It is not
 # used for anything (Noctalia owns the bar) - dropping Thunar is the only way to

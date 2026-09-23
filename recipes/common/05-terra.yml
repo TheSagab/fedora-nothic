@@ -25,10 +25,10 @@
 # The BlueBuild `dnf` module cannot express --repofrompath, hence the snippet.
 #
 # The second module replaces the repo file that RPM just installed with our own
-# copy, which points baseurl at repos.fyralabs.com instead of the metalink.
-# That single change is the whole difference; gpgcheck=1 and repo_gpgcheck=1 are
-# left as Terra ships them. The comments at the top of that file explain why,
-# with the measurements.
+# copy: baseurl points at repos.fyralabs.com instead of the metalink, and
+# repo_gpgcheck is 0. The comments at the top of that file explain both changes
+# with the measurements behind them; gpgcheck=1 is untouched, so every package
+# from Terra is still signature checked.
 #
 # The third module is the check: it asks Terra for the two packages this image
 # takes from it, so that a repository problem stops the build here, naming

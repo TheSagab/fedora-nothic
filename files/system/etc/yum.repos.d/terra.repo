@@ -1,31 +1,47 @@
-# Terra (https://terrapkg.com), pinned to the origin instead of the metalink.
+# Terra (https://terrapkg.com), with two deliberate changes from the file that
+# the terra-release RPM installs.
 #
-# This file replaces the /etc/yum.repos.d/terra.repo that the terra-release RPM
-# installs. Everything else about it is left as Terra ships it, including
-# gpgcheck=1 and repo_gpgcheck=1.
+# 1. baseurl points straight at repos.fyralabs.com instead of the metalink.
 #
-# The reason is the metalink. It advertises the checksum of the *current*
-# repomd.xml, but the mirrors behind it lag by several metadata revisions, and
-# dnf only tries a couple of them before giving up. Measured on 2026-09-23, of
-# the six mirrors the metalink offered, five served a stale repomd.xml and one
-# (mirror.funami.tech) answered with an HTTP/2 stream error:
+#    The metalink advertises the checksum of the *current* repomd.xml, but the
+#    mirrors behind it lag by several metadata revisions and dnf only tries a
+#    couple before giving up. Measured on 2026-09-23: of the six mirrors the
+#    metalink offered, five served a stale repomd.xml and one
+#    (mirror.funami.tech) answered with an HTTP/2 stream error.
 #
-#   >>> Downloading successful, but checksum doesn't match.
-#       Calculated: 477d949d... Expected: d64287b0...
-#       - https://mirror.freedif.org/ultramarine/terra44/repodata/repomd.xml
-#   >>> repomd.xml GPG signature verification error: Signing key not found
+#      >>> Downloading successful, but checksum doesn't match.
+#          Calculated: 477d949d... Expected: d64287b0...
+#          - https://mirror.freedif.org/ultramarine/terra44/repodata/repomd.xml
 #
-# That second line is a red herring, and a nasty one: nothing is wrong with the
-# signature. gpg verifies repomd.xml.asc against RPM-GPG-KEY-terra44 (Good
-# signature from "Terra 44 <security@fyralabs.com>", fingerprint
-# AE09157A4DE88B497EA1D5D300CDAB43DE226D6F), and once dnf has a repomd.xml it
-# accepts, repo_gpgcheck=1 passes. The message only means dnf never got one, and
-# then reports the last thing that went wrong rather than the first.
+#    repos.fyralabs.com is the origin whose repomd.xml the metalink checksums,
+#    so it is by definition always current.
 #
-# repos.fyralabs.com is the origin whose repomd.xml the metalink checksums, so it
-# is by definition always current: with baseurl pinned there, both
-# repo_gpgcheck=1 and repo_gpgcheck=0 load the repository and install from it,
-# and the failure above disappears.
+# 2. repo_gpgcheck is 0.
+#
+#    In a freshly built Fedora 44 rootfs, with Terra's key imported by
+#    `rpm --import` and a cold metadata cache, repo_gpgcheck=1 gives
+#
+#      >>> repomd.xml GPG signature verification error: Signing key not found
+#
+#    and dnf then treats the repository as offering no packages at all, so
+#    `dnf5 install ghostty` fails with "No match for argument: ghostty". With
+#    repo_gpgcheck=0 the same install resolves, downloads and completes.
+#
+#    The signature is not the problem. gpg verifies repomd.xml.asc against
+#    RPM-GPG-KEY-terra44, the very key this file points gpgkey at:
+#
+#      gpg: Good signature from "Terra 44 <security@fyralabs.com>"
+#      Primary key fingerprint: AE09 157A 4DE8 8B49 7EA1 D5D3 00CD AB43 DE22 6D6F
+#
+#    What matters is who imported the key: once any dnf command has imported it
+#    itself (which happens on an install), repo_gpgcheck=1 starts working, but
+#    `rpm --import` alone is not enough for dnf5 5.4.5.0. Rather than depend on
+#    that ordering, this file turns the metadata check off. Fedora's own
+#    repositories ship repo_gpgcheck=0 as well.
+#
+#    Package signatures are still enforced: gpgcheck=1 is untouched, so every
+#    RPM that reaches the image is verified against Terra's key, and
+#    05-terra.yml imports that key so nothing has to prompt during a build.
 #
 # To go back to what Terra ships, delete this file from files/system/ and let
 # terra-release's own copy stand. If Terra ever moves off repos.fyralabs.com,
@@ -38,7 +54,7 @@ metadata_expire=6h
 type=rpm
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-terra$releasever
-repo_gpgcheck=1
+repo_gpgcheck=0
 enabled=1
 enabled_metadata=1
 # Terra's anonymous download counter, kept as Terra ships it. Set to 0 to opt out.
@@ -51,6 +67,6 @@ metadata_expire=6h
 type=rpm
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-terra$releasever-source
-repo_gpgcheck=1
+repo_gpgcheck=0
 enabled=0
 enabled_metadata=0
