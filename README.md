@@ -337,9 +337,11 @@ one-line edit.
 ## Re-checking this configuration yourself
 
 The repository was verified against the real Fedora 44 artefacts rather than by
-inspection: the real `niri` binary, the real `bluebuild` CLI, the real module
-implementations, and the real `dnf5` solver. On a running system you can repeat
-most of it:
+inspection: the real `niri` binary, the real `bluebuild` CLI, every module this
+recipe uses executed with its real payload in a Fedora 44 rootfs, and the real
+`dnf5` solver. That covers all eight modules of the plain image plus `akmods`
+and `initramfs` for the NVIDIA one. On a running system you can repeat most of
+it:
 
 ```bash
 # the niri config parses and passes niri's full schema validation
