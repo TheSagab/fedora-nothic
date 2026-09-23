@@ -299,6 +299,29 @@ for it.
   upstream `ublue-os/akmods` has not caught up with the current kernel yet.
   Wait for their next build and re-run.
 
+## Assumptions this image makes, and how to change them
+
+Your request left several things open. Rather than guess silently, here is every
+choice I made that you might want different, with the exact place to change it.
+Nothing below requires touching more than one or two files.
+
+| Assumption | Where it lives | How to change it |
+| --- | --- | --- |
+| Base is Universal Blue's desktop-less image, pinned to Fedora 44 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
+| Image names are `sagab-niri` and `sagab-niri-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
+| Greeter is the **TUI** greeter tuigreet | `files/system/etc/greetd/config.toml` + the `greetd`/`tuigreet` entries in `10-niri.yml` | Swap `command` for `gtkgreet` (add `gtkgreet cage gtk4-layer-shell`), or replace greetd with SDDM |
+| Terminal is `foot` | `30-apps.yml` + the `Mod+T` bind in `niri/config.kdl` | Change both; `alacritty` is what niri's own defaults use |
+| Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
+| File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image (see the weight note in that file) |
+| Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
+| NVIDIA driver flavour is `nvidia-open` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia` for Maxwell..Ada |
+| Noctalia ships a small default config (dark, top bar, overview type-to-launch) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
+| Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
+| Images are signed with your own cosign key | `90-final.yml` + the `SIGNING_SECRET` secret | Comment out the `signing` module to build unsigned while experimenting |
+
+If any of these are wrong for you, say so and I will change them - most are a
+one-line edit.
+
 ## Re-checking this configuration yourself
 
 The repository was verified against the real Fedora 44 artefacts rather than by
