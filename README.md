@@ -292,6 +292,12 @@ for it.
   `ls /usr/share/xdg-desktop-portal/portals/`.
 * **niri starts with an error / ignores the config**: `ujust niri-validate`
   (or `niri validate -c /etc/niri/config.kdl`) prints the parse errors.
+* **`bluebuild build` fails in WSL2 with `remount /, flags: 0x44000: invalid argument`**:
+  that is the WSL kernel refusing to change root mount propagation, which is what
+  container storage does when it applies an image layer. It is not a problem with
+  the recipe - even pulling a 1 KiB image fails the same way, under both the
+  `overlay` and `vfs` storage drivers. Build on a real Linux host or let GitHub
+  Actions do it.
 * **`ujust` has no `Desktop` group**: the justfiles module appends its imports
   to `/usr/share/ublue-os/just/60-custom.just`; check that the file contains the
   import line for `/usr/share/bluebuild/justfiles/niri.just`.
