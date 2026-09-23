@@ -10,10 +10,11 @@
 # /usr/lib/bootc/kargs.d/, so nothing extra is needed for those.
 #
 # Driver flavours - pick ONE:
-#   nvidia-open : open kernel modules. Turing (RTX 20xx / GTX 16xx) and newer.
-#                 Required for Blackwell (RTX 50xx) and later. DEFAULT BELOW.
-#   nvidia      : proprietary kernel modules, Maxwell .. Ada (GTX 9xx/10xx,
-#                 RTX 20xx-40xx). Does NOT support Blackwell.
+#   nvidia      : proprietary kernel modules. Maxwell .. Ada (GTX 9xx/10xx,
+#                 RTX 20xx-40xx). Does NOT support Blackwell (RTX 50xx) or
+#                 later. THIS IS THE DEFAULT.
+#   nvidia-open : open kernel modules. Turing (RTX 20xx / GTX 16xx) and newer;
+#                 required for Blackwell and later.
 #
 # See https://github.com/NVIDIA/open-gpu-kernel-modules for the card list.
 
@@ -25,7 +26,14 @@ modules:
     # We only want the NVIDIA driver, no other akmods. The module requires the
     # key to be present, so it is an empty list rather than omitted.
     install: []
-    nvidia-driver: nvidia-open
+    # Proprietary kernel modules. This is the default because the cards it
+    # covers are the ones people still run: Maxwell through Ada (GTX 9xx/10xx,
+    # RTX 20xx-40xx). It does NOT support Blackwell (RTX 50xx) or newer.
+    #
+    # For Blackwell and later, switch this to nvidia-open, which is the only
+    # supported flavour there and also works for Turing and newer:
+    #     nvidia-driver: nvidia-open
+    nvidia-driver: nvidia
 
   # The NVIDIA driver adds modprobe/dracut configuration, so the initramfs
   # has to be regenerated for early KMS to work.
