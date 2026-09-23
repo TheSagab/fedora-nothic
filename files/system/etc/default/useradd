@@ -1,0 +1,20 @@
+# useradd defaults file
+#
+# This is the Fedora default with one change: SHELL points at fish, which is
+# this image's default shell. Everything else is left as shadow-utils ships it.
+#
+# Scope: this governs accounts created *after* the image is built - `useradd`,
+# and installers that honour this file. An account that already exists keeps
+# whatever shell it has, because its shell lives in /etc/passwd on the installed
+# system, not in the image. Use `ujust set-default-shell` for those.
+#
+# Note that overwriting this file means a future shadow-utils update will not
+# add new keys here; check `rpm -V shadow-utils` if defaults ever seem stale.
+
+GROUP=100
+HOME=/home
+INACTIVE=-1
+EXPIRE=
+SHELL=/usr/bin/fish
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=yes

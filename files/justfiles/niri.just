@@ -14,6 +14,7 @@ niri-info:
     echo "Kernel:     $(uname -r)"
     echo "Compositor: $(niri --version 2>/dev/null || echo 'not installed')"
     echo "Shell:      $(noctalia --version 2>/dev/null || echo 'not installed')"
+    echo "Login sh:   $(getent passwd "$USER" | cut -d: -f7)"
     echo "mise:       $(mise --version 2>/dev/null || echo 'not installed')"
     echo
     if command -v nvidia-smi >/dev/null 2>&1; then
@@ -71,3 +72,31 @@ niri-validate:
         echo
         niri validate -c "${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
     fi
+
+# Change the login shell of the current user (defaults to fish)
+#
+# This image sets fish as the shell for accounts created later, but an account
+# that already existed keeps whatever shell it had, so this is how you switch it.
+# Pass a shell to use something else: `ujust set-default-shell /bin/bash`
+[group('Desktop')]
+set-default-shell shell="/usr/bin/fish":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="{{ shell }}"
+    if [ ! -x "$target" ]; then
+        echo "$target is not an executable." >&2
+        exit 1
+    fi
+    if ! grep -qxF "$target" /etc/shells; then
+        echo "$target is not listed in /etc/shells, so chsh will refuse it." >&2
+        echo "Available: $(grep -v '^#' /etc/shells | tr '\n' ' ')" >&2
+        exit 1
+    fi
+    current="$(getent passwd "$USER" | cut -d: -f7)"
+    if [ "$current" = "$target" ]; then
+        echo "Your login shell is already $target."
+        exit 0
+    fi
+    chsh -s "$target" "$USER"
+    echo "Login shell changed from $current to $target."
+    echo "It takes effect the next time you log in."
