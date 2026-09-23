@@ -482,9 +482,10 @@ bluebuild validate recipes/recipe-nvidia.yml
 command -v noctalia-greeter-session
 systemctl cat greetd.service | grep -A1 '\[Install\]'
 
-# Terra is registered, pinned to the origin rather than the metalink, and
-# carries the two packages this image takes from it
-grep -c metalink /etc/yum.repos.d/terra.repo    # expect 0
+# Terra is registered, with this image's repo file in place rather than Terra's
+# own, and carries the two packages this image takes from it
+grep -c metalink /etc/yum.repos.d/terra.repo      # expect 0
+grep -c '^repo_gpgcheck=0' /etc/yum.repos.d/terra.repo   # expect 2
 dnf repoquery --repo terra noctalia-greeter ghostty
 
 # Noctalia accepts the shipped config keys
