@@ -302,6 +302,33 @@ The recipes are deliberately small and commented - edit them directly.
   `command = "tuigreet --time --remember --asterisks --cmd niri-session"`;
   to hand the login screen to SDDM instead, `systemctl disable --now greetd`
   and `systemctl enable --now sddm`.
+* **A different file manager**: the image ships Thunar, listed with its
+  integrations in `recipes/common/30-apps.yml`. The table below is what each
+  alternative would add on top of this image, measured with `dnf5` the same way
+  as the weight note in that file (`--assumeno install --setopt=
+  install_weak_deps=False`, so a package already present costs nothing).
+
+  | File manager | Packages | Download | Installed | Brings in |
+  | --- | --- | --- | --- | --- |
+  | pcmanfm (GTK) | 47 | 9 MiB | 34 MiB | nothing new |
+  | caja | 54 | 14 MiB | 54 MiB | gtk-layer-shell |
+  | Thunar (current) | 66 | 18 MiB | 79 MiB | xfce4-panel, hard-required |
+  | nemo | 81 | 27 MiB | 59 MiB | xapp, gnome-online-accounts-libs |
+  | nautilus | 118 | 45 MiB | 143 MiB | gnome-desktop3/4, gnome-autoar |
+  | pcmanfm-qt | 51 | 47 MiB | 148 MiB | Qt6, KF6 |
+  | krusader | 139 | 110 MiB | 380 MiB | KDE |
+  | dolphin | 164 | 122 MiB | 425 MiB | KDE |
+  | yazi (TUI) | 1 | 12 MiB | 36 MiB | nothing, statically linked |
+  | felix (TUI) | 1 | 2 MiB | 4 MiB | nothing |
+  | nnn / ranger (TUI) | 1 | 119 KiB / 578 KiB | 233 KiB / 2 MiB | nothing |
+
+  Everything down to nautilus is GTK and pulls no new toolkit, which is why the
+  differences are small; the Qt and KDE ones would add a second toolkit to an
+  image that is deliberately GTK, and cost 4-10x as much. `yazi` and `felix`
+  come from Terra, the rest from Fedora (`lf` and `broot` are in neither).
+  To swap, replace the Thunar block in `30-apps.yml`, keep the `gvfs-*` entries
+  (they are what gives any of them trash, MTP, SMB and NFS), and check whether
+  `Mod+E` in `files/system/etc/niri/config.kdl` still points at something real.
 
 ### Adding another variant
 
@@ -373,9 +400,12 @@ for it.
 * **`bluebuild build` fails in WSL2 with `remount /, flags: 0x44000: invalid argument`**:
   that is the WSL kernel refusing to change root mount propagation, which is what
   container storage does when it applies an image layer. It is not a problem with
-  the recipe - even pulling a 1 KiB image fails the same way, under both the
-  `overlay` and `vfs` storage drivers. Build on a real Linux host or let GitHub
-  Actions do it.
+  the recipe, and it is not something an isolation mode gets around: a build of
+  `FROM scratch` plus a single `COPY` fails the same way under both
+  `buildah bud --isolation=chroot` and `--isolation=oci`, and under both the
+  `overlay` and `vfs` storage drivers, in the helper that applies the layer
+  (`ApplyLayer`). Even pulling a 1 KiB image fails. Build on a real Linux host or
+  let GitHub Actions do it.
 * **The build fails in the Terra modules**: `05-terra.yml` checks that Terra
   offers `ghostty` and `noctalia-greeter`, and stops there with a message if it
   does not, so a repository problem fails early and names itself.
@@ -449,7 +479,7 @@ Nothing below requires touching more than one or two files.
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
-| File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image (see the weight note in that file) |
+| File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image, or pick another file manager from the table under Customising |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
