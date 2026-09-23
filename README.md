@@ -366,6 +366,13 @@ ls /usr/share/xdg-desktop-portal/portals/
 systemctl list-units --type=service | grep -E 'gdm|sddm|gnome-shell|plasma'
 ```
 
+Note that this image has never been built as a container here, so two caveats
+apply to that verification: the `akmods` module was driven with a local `skopeo`
+stand-in (it performs a real registry pull and writes the same `dir:` layout
+`skopeo copy` would), and its SELinux `semodule` step was a no-op because the
+build environment had no SELinux. Both are noted because they are the only parts
+of the pipeline that were not the real thing.
+
 Notes that came out of that verification and are easy to trip over:
 
 * The greeter launches `niri-session`, which is exactly the `Exec=` in the
