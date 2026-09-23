@@ -30,7 +30,7 @@ jobs:
         recipe:
           # !! Keep this list in sync with the files in recipes/
           - recipe.yml # no NVIDIA driver
-          - recipe-nvidia.yml # NVIDIA driver (nvidia-open)
+          - recipe-nvidia.yml # the proprietary NVIDIA driver (see recipes/nvidia/akmods.yml)
     steps:
       # The build is fully handled by the reusable GitHub Action. It needs the
       # cosign private key in the SIGNING_SECRET repository secret - see

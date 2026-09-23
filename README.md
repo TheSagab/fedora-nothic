@@ -536,6 +536,15 @@ systemctl show -p Wants --value graphical.target | tr ' ' '\n' | grep display-ma
 readlink -f /etc/systemd/system/display-manager.service
 systemd-analyze verify /usr/lib/systemd/system/greetd.service
 
+# the user-facing recipes, end to end: this validates the config with the real
+# niri binary, and the second one really does change your login shell
+ujust niri-validate
+ujust set-default-shell /usr/bin/fish
+
+# new accounts default to fish (this only prints the defaults; adding an account
+# is what actually exercises it)
+useradd -D | grep ^SHELL
+
 # the package set: how heavy it is, and that there is no desktop in it. Feed it
 # every package the recipes/common dnf modules name; this is where the numbers
 # in the Design notes and in 30-apps.yml come from. Run it on a Fedora 44 host.
@@ -549,6 +558,20 @@ stand-in (it performs a real registry pull and writes the same `dir:` layout
 `skopeo copy` would), and its SELinux `semodule` step was a no-op because the
 build environment had no SELinux. Both are noted because they are the only parts
 of the pipeline that were not the real thing.
+
+Two things could be observed but not completed here, and both are the
+environment's fault rather than the image's:
+
+* **The skeleton copy that `useradd` does.** `useradd -m` really does give a new
+  account `/usr/bin/fish` from the shipped `/etc/default/useradd`, but its copy
+  of `/etc/skel` into the new home directory is incomplete in an unprivileged
+  user-namespace chroot - it copies only `.bashrc` there, with stock Fedora 44
+  files and stock settings, while a plain `cp -r /etc/skel/.` of the same tree
+  copies everything. So the fish, ghostty and Noctalia defaults are verified as
+  being present in `/etc/skel`, not as arriving in a new home directory.
+* **ghostty's own CLI.** `ghostty +validate-config` produces no output at all in
+  that chroot, so the shipped ghostty config is checked against the keys
+  `Config.zig` declares instead of by running the binary.
 
 Notes that came out of that verification and are easy to trip over:
 
