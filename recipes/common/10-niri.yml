@@ -16,11 +16,23 @@ modules:
         - xwayland-satellite
 
         # --- login manager ----------------------------------------------
-        # greetd is a minimal, compositor-agnostic greeter daemon.
-        # tuigreet is a small TUI greeter; see README.md for how to swap in a
-        # graphical greeter (gtkgreet, SDDM, ...) instead.
+        # greetd is a minimal, compositor-agnostic greeter daemon. The greeter
+        # itself is noctalia-greeter, which comes from the Terra repository
+        # (recipes/common/05-terra.yml, which must run before this module).
+        #
+        # noctalia-greeter is a *graphical* greeter: greetd runs
+        # /usr/bin/noctalia-greeter-session, which starts the wlroots compositor
+        # bundled inside it and draws the login screen in that session. That is
+        # why it hard-requires wlroots - Fedora 44 ships 0.20.2, which matches
+        # the libwlroots-0.20.so it links against - and why it needs a real
+        # logind session for DRM access. Fedora's greetd package already puts
+        # pam_systemd.so in /usr/lib/pam.d/greetd-greeter, so that is handled.
+        #
+        # It reads /var/lib/noctalia-greeter/greeter.toml, which this image
+        # creates via a tmpfiles.d entry (see files/system/usr/lib/tmpfiles.d/)
+        # owned by the greetd user.
         - greetd
-        - tuigreet
+        - noctalia-greeter
 
         # --- XDG desktop portals ----------------------------------------
         # niri ships /usr/share/xdg-desktop-portal/niri-portals.conf which

@@ -1,17 +1,33 @@
 # greetd configuration for the sagab-niri image.
 #
 # greetd owns tty1 and runs the greeter, which in turn starts the session.
-# Fedora's greetd package creates the `greetd` user via sysusers, so the
-# `user` key below must stay in sync with it.
+# Fedora's greetd package creates the `greetd` user via sysusers, so the `user`
+# key below must stay in sync with it. (Upstream's docs say `user = "greeter"`;
+# that is the Debian/Arch account name. On Fedora it is `greetd`, and the docs
+# explicitly say to keep the existing account if it differs.)
 #
-# tuigreet is a small TUI greeter: it lists the sessions in
-# /usr/share/wayland-sessions (the niri package ships niri.desktop there) and
-# defaults to niri-session.
+# The greeter is noctalia-greeter, which comes from the Terra repository.
 #
-# To swap in a graphical greeter, change `command` below. For example, with
-# gtkgreet (dnf install gtkgreet cage gtk4-layer-shell):
-#   command = "cage -s -- gtkgreet --layer-shell --command niri-session"
-# or with SDDM instead of greetd entirely:
+# Note that greetd must run `noctalia-greeter-session`, NOT `noctalia-greeter`.
+# The session wrapper is what starts the wlroots compositor bundled inside the
+# greeter and draws the login screen in that session - running the plain binary
+# would try to draw on a compositor that does not exist yet.
+#
+# noctalia-greeter is graphical, so unlike a TUI greeter it needs a real logind
+# session for DRM access. Fedora's greetd package already ships
+# /usr/lib/pam.d/greetd-greeter with `session optional pam_systemd.so`, which is
+# what provides it, so nothing extra is needed here.
+#
+# Its own settings live in /var/lib/noctalia-greeter/greeter.toml (optional;
+# built-in defaults are used if absent) and sync.toml (written by the greeter to
+# remember the last session and colour scheme). This image creates that directory
+# with the right ownership via files/system/usr/lib/tmpfiles.d/.
+# The canonical greeter.toml to copy from is:
+#   https://github.com/noctalia-dev/noctalia-greeter/blob/main/examples/greeter.toml
+#
+# To go back to a text greeter instead, install tuigreet and change `command` to
+#   command = "tuigreet --time --remember --asterisks --cmd niri-session"
+# or to hand the login screen to SDDM:
 #   sudo systemctl disable --now greetd && sudo systemctl enable --now sddm
 
 [terminal]
@@ -19,5 +35,5 @@
 vt = 1
 
 [default_session]
-command = "tuigreet --time --greeting 'Sagab Niri' --remember --remember-session --asterisks --cmd niri-session"
+command = "/usr/bin/noctalia-greeter-session"
 user = "greetd"
