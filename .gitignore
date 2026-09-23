@@ -10,3 +10,4 @@ cosign.private
 *.iso-CHECKSUM
 *.qcow2
 *.raw
+/.bluebuild-scripts_*

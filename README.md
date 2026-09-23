@@ -92,7 +92,12 @@ the verification policy - and never commit `cosign.key`, which is already in
 
 If you prefer not to sign while experimenting, comment out the `signing` module
 in `recipes/common/90-final.yml` and use `ostree-unverified-registry:` when
-rebasing.
+rebasing. Without `cosign.pub` the build stops at the last module with:
+
+```
+ERROR: Cannot find 'sagab-niri.pub' image key in '/etc/pki/containers/'
+       BlueBuild CLI should have copied it, but it didn't
+```
 
 ### 3. Build
 
@@ -332,6 +337,14 @@ Notes that came out of that verification and are easy to trip over:
   `--setopt=install_weak_deps=False`, so niri's `Recommends` (waybar, alacritty,
   swaylock, fuzzel, the portal backends, wireplumber) are not pulled in behind
   your back. Anything you want must be listed explicitly.
+* `systemctl enable greetd.service` only creates the `display-manager.service`
+  alias - it does **not** add greetd to any target, because the unit's
+  `[Install]` section has no `WantedBy`. That is why `recipes/common/60-system.yml`
+  explicitly runs `systemctl set-default graphical.target`: `graphical.target`
+  wants `display-manager.service`, so the greeter is only reachable through it.
+* The `justfiles` module only writes its import into
+  `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
+  on the Universal Blue base); otherwise it falls back to installing `blujust`.
 
 ## Links
 

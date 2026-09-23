@@ -7,6 +7,12 @@
 #
 # Swap any of these for your favourites - just keep the matching key bindings
 # in files/system/etc/niri/config.kdl in sync.
+#
+# Weight warning: this is the heaviest module in the image. On a minimal Fedora
+# base, 20-noctalia resolves to ~346 packages and 1 GiB, and adding this module
+# takes it to ~537 packages and 2 GiB - almost all of it mpv's ffmpeg stack and
+# Thunar's XFCE/gvfs stack. If you would rather keep the image small, drop
+# Thunar, mpv and file-roller here and install those as Flatpaks instead.
 
 modules:
   - type: dnf
