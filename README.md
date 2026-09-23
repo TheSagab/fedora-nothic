@@ -370,6 +370,13 @@ ls /usr/share/xdg-desktop-portal/portals/
 # really no GNOME or KDE: niri should be the only compositor and
 # greetd the only display manager
 systemctl list-units --type=service | grep -E 'gdm|sddm|gnome-shell|plasma'
+
+# the boot path, link by link:
+#   default.target -> graphical.target -> display-manager.service -> greetd
+systemctl get-default
+systemctl show -p Wants --value graphical.target | tr ' ' '\n' | grep display-manager
+readlink -f /etc/systemd/system/display-manager.service
+systemd-analyze verify /usr/lib/systemd/system/greetd.service
 ```
 
 Note that this image has never been built as a container here, so two caveats
