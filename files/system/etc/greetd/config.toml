@@ -1,0 +1,23 @@
+# greetd configuration for the sagab-niri image.
+#
+# greetd owns tty1 and runs the greeter, which in turn starts the session.
+# Fedora's greetd package creates the `greetd` user via sysusers, so the
+# `user` key below must stay in sync with it.
+#
+# tuigreet is a small TUI greeter: it lists the sessions in
+# /usr/share/wayland-sessions (the niri package ships niri.desktop there) and
+# defaults to niri-session.
+#
+# To swap in a graphical greeter, change `command` below. For example, with
+# gtkgreet (dnf install gtkgreet cage gtk4-layer-shell):
+#   command = "cage -s -- gtkgreet --layer-shell --command niri-session"
+# or with SDDM instead of greetd entirely:
+#   sudo systemctl disable --now greetd && sudo systemctl enable --now sddm
+
+[terminal]
+# The VT to run the greeter on. Can be "next", "current" or a number.
+vt = 1
+
+[default_session]
+command = "tuigreet --time --greeting 'Sagab Niri' --remember --remember-session --asterisks --cmd niri-session"
+user = "greetd"

@@ -1,0 +1,12 @@
+# Never commit the private signing key.
+cosign.key
+cosign.private
+
+# Generated locally by `bluebuild generate`.
+/Containerfile
+
+# Local build/disk artifacts.
+*.iso
+*.iso-CHECKSUM
+*.qcow2
+*.raw

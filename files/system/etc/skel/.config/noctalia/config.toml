@@ -1,0 +1,22 @@
+# Noctalia user configuration.
+# Reference: https://docs.noctalia.dev/noctalia/configuration/
+#
+# Noctalia merges every *.toml in ~/.config/noctalia/ (alphabetically, so you
+# can split this into bar.toml, theme.toml, ...), then layers GUI-managed
+# overrides from ~/.local/state/noctalia/settings.toml on top.
+#
+# Anything you change in the Settings window is written to settings.toml, not
+# here, so this file stays yours to keep in dotfiles.
+#
+# Delete this file to go back to Noctalia's built-in defaults.
+
+[theme]
+mode = "dark"
+
+# Noctalia's first bar instance is called "default".
+[bar.default]
+position = "top"
+
+[shell]
+# Let typing in niri's overview open Noctalia's launcher.
+niri_overview_type_to_launch_enabled = true

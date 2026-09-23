@@ -1,0 +1,9 @@
+# Disk layout used by bootc-image-builder when producing qcow2/raw images
+# (see .github/workflows/build-disk.yml).
+#
+# 20 GiB is a comfortable minimum for this image: the NVIDIA variant is the
+# larger of the two, and Flatpak apps live in /var on top of that.
+
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "20 GiB"

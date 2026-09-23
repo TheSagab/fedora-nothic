@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# System integration: which units run at boot and what the OS calls itself.
+
+modules:
+  # --- systemd ------------------------------------------------------------
+  - type: systemd
+    system:
+      enabled:
+        # greetd owns tty1 (it Conflicts=getty@tty1.service itself) and, via
+        # its [Install] Alias, becomes display-manager.service, which
+        # graphical.target pulls in.
+        - greetd.service
+        - bluetooth.service
+
+  # The greeter is what starts the session, so make sure we boot into
+  # graphical.target even if the base image defaults to multi-user.target.
+  - type: script
+    snippets:
+      - |
+        set -eu
+        systemctl set-default graphical.target
+
+  # --- identity -----------------------------------------------------------
+  # Only cosmetic fields are touched here. Deliberately NOT changing ID or
+  # VERSION_ID: they are used by dnf/COPR and by tools that detect Fedora.
+  - type: os-release
+    properties:
+      NAME: Sagab Niri
+      PRETTY_NAME: Sagab Niri 44 (niri + Noctalia)
+      VARIANT: Niri + Noctalia
+      VARIANT_ID: niri-noctalia
+      DEFAULT_HOSTNAME: sagab-niri
+      ID_LIKE: fedora

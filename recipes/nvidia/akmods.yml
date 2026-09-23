@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# The NVIDIA variant. Included only by recipes/recipe-nvidia.yml.
+#
+# This module installs the kernel modules and the userspace driver that
+# Universal Blue builds in github.com/ublue-os/akmods, using the very same
+# install script their own images use. It also writes the kernel arguments
+# (nouveau blacklist, nvidia-drm.modeset, simpledrm blacklist) into
+# /usr/lib/bootc/kargs.d/, so nothing extra is needed for those.
+#
+# Driver flavours - pick ONE:
+#   nvidia-open : open kernel modules. Turing (RTX 20xx / GTX 16xx) and newer.
+#                 Required for Blackwell (RTX 50xx) and later. DEFAULT BELOW.
+#   nvidia      : proprietary kernel modules, Maxwell .. Ada (GTX 9xx/10xx,
+#                 RTX 20xx-40xx). Does NOT support Blackwell.
+#
+# See https://github.com/NVIDIA/open-gpu-kernel-modules for the card list.
+
+modules:
+  - type: akmods
+    # `main` = the stock Fedora kernel that ghcr.io/ublue-os/base-main uses.
+    # Do not change this unless you also change the base image.
+    base: main
+    # We only want the NVIDIA driver, no other akmods. The module requires the
+    # key to be present, so it is an empty list rather than omitted.
+    install: []
+    nvidia-driver: nvidia-open
+
+  # The NVIDIA driver adds modprobe/dracut configuration, so the initramfs
+  # has to be regenerated for early KMS to work.
+  - type: initramfs

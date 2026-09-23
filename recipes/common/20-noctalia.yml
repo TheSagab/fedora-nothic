@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Noctalia: the desktop shell (bars, launcher, notifications, lock screen,
+# wallpaper, control center, ...). It is a plain Wayland client, so it is
+# installed from the Fedora repositories and started by niri.
+#
+# Fedora 44+ only. On older releases use the LionHeartP COPR / build from
+# source - see https://docs.noctalia.dev/noctalia/getting-started/installation/
+
+modules:
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        - noctalia
+
+        # Noctalia's own Recommends, spelled out because we build with weak
+        # dependencies disabled:
+        #   upower + ddcutil -> battery and external-monitor brightness
+        #   gnome-keyring    -> Secret Service provider for saved credentials
+        # The package also hard-requires pipewire, git-core and
+        # hicolor-icon-theme, which dnf brings in automatically.
+        - upower
+        - ddcutil
+        - gnome-keyring
+
+  # Noctalia's power-profile widget (and its Control Center shortcut) talks to
+  # net.hadess.PowerProfiles. Fedora has two providers for that D-Bus name and
+  # they conflict with each other, so install one only if neither is present.
+  - type: script
+    snippets:
+      - |
+        set -eu
+        if rpm -q power-profiles-daemon >/dev/null 2>&1 || rpm -q tuned-ppd >/dev/null 2>&1; then
+          echo "A PowerProfiles provider is already installed, leaving it alone."
+        else
+          dnf5 -y install --setopt=install_weak_deps=False power-profiles-daemon
+        fi

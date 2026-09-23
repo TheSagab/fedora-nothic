@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Development tooling. The centrepiece is mise, which manages language
+# runtimes and CLI tools per project (mise.toml) and per user.
+#
+# Shell activation for mise is set up by the files in recipes/common/50-files.yml.
+
+modules:
+  # mise is not packaged in Fedora, so use the upstream COPR. The repository
+  # file is only needed at build time, hence cleanup: true.
+  - type: dnf
+    repos:
+      copr:
+        - jdxcode/mise
+      cleanup: true
+    install:
+      install-weak-deps: false
+      packages:
+        - mise
+
+  # A small, opinionated set of dev/CLI tools that are useful on the host.
+  # Anything else belongs in a project's mise.toml or in a distrobox.
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        - git
+        - neovim
+        - ripgrep
+        - fd-find
+        - bat
+        - tree
+        - yq
+        - just
+        # Container/OS tooling. distrobox and toolbox already come from the
+        # Universal Blue base image; skopeo comes from 00-base.yml.
+        - podman
+        - buildah

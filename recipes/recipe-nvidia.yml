@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+#
+# Variant B of this image: same system as recipes/recipe.yml, plus the
+# out-of-tree NVIDIA kernel modules and userspace driver from
+# github.com/ublue-os/akmods.
+#
+# The only difference is the `from-file: nvidia/akmods.yml` line below.
+# Keep this file and recipes/recipe.yml in sync when editing modules.
+
+# published as ghcr.io/<your-github-user>/<name>
+name: sagab-niri-nvidia
+description: Fedora Atomic (Universal Blue base) with niri, the Noctalia shell, mise and the NVIDIA driver.
+
+base-image: ghcr.io/ublue-os/base-main
+image-version: 44
+
+modules:
+  - from-file: common/00-base.yml
+  - from-file: common/10-niri.yml
+  - from-file: common/20-noctalia.yml
+  - from-file: common/30-apps.yml
+  - from-file: common/40-devtools.yml
+  - from-file: common/50-files.yml
+  - from-file: common/60-system.yml
+
+  # --- the NVIDIA bits (this is the only difference from recipe.yml) ---
+  - from-file: nvidia/akmods.yml
+
+  - from-file: common/90-final.yml

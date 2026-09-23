@@ -1,0 +1,417 @@
+// niri configuration shipped by the sagab-niri image.
+//
+// This file is the *system default*: niri loads
+//   $XDG_CONFIG_HOME/niri/config.kdl  (i.e. ~/.config/niri/config.kdl)
+// and only falls back to /etc/niri/config.kdl when that does not exist.
+// /etc is writable and survives updates on atomic Fedora, so you can either
+// edit this file in place or, better, start your own copy with
+//   ujust niri-config
+// and edit ~/.config/niri/config.kdl instead.
+//
+// niri validates this file on every change; run `niri validate` after editing.
+// Full reference: https://github.com/niri-wm/niri/wiki/Configuration:-Introduction
+//
+// Everything below is the upstream niri default configuration, adjusted for
+// this image: foot as the terminal, the Noctalia launcher/panels instead of
+// fuzzel/waybar, Noctalia's lock screen, and Noctalia's key bindings.
+
+// ---------------------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------------------
+
+input {
+    keyboard {
+        xkb {
+            // Left empty on purpose: niri then takes the layout from
+            // org.freedesktop.locale1, which you set with
+            //   localectl set-x11-keymap <layout> <model> <variant> <options>
+        }
+
+        // Enable numlock on startup.
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    mouse {
+        // accel-speed 0.2
+        // accel-profile "flat"
+    }
+
+    trackpoint {
+        // middle-emulation
+    }
+
+    // Uncomment to make the mouse warp to the centre of newly focused windows.
+    // warp-mouse-to-focus
+}
+
+// ---------------------------------------------------------------------------
+// Outputs
+// ---------------------------------------------------------------------------
+//
+// Configure monitors by name (`niri msg outputs` lists them). Remove the "/-"
+// to enable this block. Without it niri picks sensible defaults, and you can
+// also change things live with `wlr-randr` or `niri msg output`.
+//
+/-output "eDP-1" {
+    mode "1920x1080@60.000"
+    scale 1.0
+    transform "normal"
+    // position x=0 y=0
+}
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+layout {
+    gaps 12
+
+    // "never" | "always" | "on-overflow"
+    center-focused-column "never"
+
+    // Widths cycled through by Mod+R.
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    // Width of newly opened windows.
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 3
+        active-color "#7fc8ff"
+        inactive-color "#505050"
+    }
+
+    // A border around every window. The focus ring already marks the active
+    // window, so keep this off unless you prefer the outline.
+    border {
+        off
+    }
+
+    shadow {
+        on
+        softness 40
+        spread 5
+        offset x=0 y=6
+        color "#00000070"
+    }
+
+    // Struts reserve space at the edges of the screen. Noctalia's bar claims
+    // its own exclusive zone via layer-shell, so nothing is needed here. If
+    // you ever run a bar that does not, this is where you would add it:
+    // struts {
+    //     top 32
+    // }
+}
+
+// Background blur. `background-effect { blur true }` on a window-rule or
+// layer-rule is what actually turns blur on for a surface; these are the
+// global quality knobs.
+blur {
+    passes 2
+    offset 3.0
+    noise 0.03
+    saturation 1.0
+}
+
+// ---------------------------------------------------------------------------
+// Overview / workspaces
+// ---------------------------------------------------------------------------
+
+overview {
+    zoom 0.5
+    // Used when no wallpaper is placed inside the backdrop.
+    backdrop-color "#1a1a1a"
+
+    workspace-shadow {
+        off
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Environment for everything niri spawns
+// ---------------------------------------------------------------------------
+
+environment {
+    // Firefox and Chromium/Electron apps: use native Wayland.
+    MOZ_ENABLE_WAYLAND "1"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    // Qt apps: Wayland with an X11 fallback.
+    QT_QPA_PLATFORM "wayland;xcb"
+}
+
+// ---------------------------------------------------------------------------
+// Window rules
+// ---------------------------------------------------------------------------
+
+// Rounded corners everywhere, clipped to the window geometry so shadows and
+// backgrounds do not bleed past the rounded edge.
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+// Blur behind every window. Looks great, but it is the single most expensive
+// effect in the compositor - comment this out on weaker GPUs.
+window-rule {
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Noctalia's settings window is a normal toplevel: open it floating and give
+// it a sensible size.
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// ---------------------------------------------------------------------------
+// Layer rules (Noctalia surfaces)
+// ---------------------------------------------------------------------------
+
+// Put Noctalia's blurred wallpaper copy inside niri's overview backdrop, so
+// the overview is not a flat colour.
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+// Noctalia publishes blur regions for its own surfaces. Disabling "xray"
+// makes those regions sample what is actually behind them.
+layer-rule {
+    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+    }
+}
+
+layer-rule {
+    match namespace="noctalia-window-switcher"
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Misc
+// ---------------------------------------------------------------------------
+
+// Noctalia asks for this: it lets notifications activate windows even when the
+// XDG activation serial is not valid.
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// ---------------------------------------------------------------------------
+// Autostart
+// ---------------------------------------------------------------------------
+
+// Create ~/Desktop, ~/Downloads, ~/Pictures, ... on first login. On Wayland
+// there is no XDG autostart, so this normally never runs otherwise.
+spawn-at-startup "xdg-user-dirs-update"
+
+// The shell. Noctalia owns the bar, launcher, notifications, lock screen,
+// wallpaper, control centre and OSDs.
+spawn-at-startup "noctalia"
+
+// ---------------------------------------------------------------------------
+// Switch events
+// ---------------------------------------------------------------------------
+
+switch-events {
+    // Lock before suspending on lid close. logind's own HandleLidSwitch is
+    // left at its default; Noctalia locks before any suspend, so this is
+    // mainly for machines where logind's handling is ignored.
+    lid-close { spawn "noctalia" "msg" "session" "lock-and-suspend"; }
+}
+
+// ---------------------------------------------------------------------------
+// Key bindings
+// ---------------------------------------------------------------------------
+
+binds {
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // --- applications and shell surfaces -------------------------------
+    Mod+T hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
+    Mod+D hotkey-overlay-title="Launcher: Noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+Space hotkey-overlay-title="Launcher: Noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+S hotkey-overlay-title="Control centre" { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+Shift+S hotkey-overlay-title="Noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
+    Alt+Tab hotkey-overlay-title="Window switcher" { spawn-sh "noctalia msg window-switcher"; }
+    Mod+E hotkey-overlay-title="Files: Thunar" { spawn "thunar"; }
+
+    // --- session --------------------------------------------------------
+    Super+Alt+L hotkey-overlay-title="Lock the screen" { spawn-sh "noctalia msg session lock"; }
+    Mod+Shift+E { quit; }
+    Ctrl+Alt+Delete { quit; }
+    Mod+Shift+P { power-off-monitors; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // --- media keys (handled by Noctalia so they show an OSD) -----------
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+
+    XF86AudioPlay allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPause allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioStop allow-when-locked=true { spawn-sh "playerctl stop"; }
+    XF86AudioPrev allow-when-locked=true { spawn-sh "playerctl previous"; }
+    XF86AudioNext allow-when-locked=true { spawn-sh "playerctl next"; }
+
+    // --- niri navigation ------------------------------------------------
+    Mod+O repeat=false { toggle-overview; }
+    Mod+Q repeat=false { close-window; }
+
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+    Mod+H     { focus-column-left; }
+    Mod+J     { focus-window-down; }
+    Mod+K     { focus-window-up; }
+    Mod+L     { focus-column-right; }
+
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Down  { move-window-down; }
+    Mod+Ctrl+Up    { move-window-up; }
+    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+H     { move-column-left; }
+    Mod+Ctrl+J     { move-window-down; }
+    Mod+Ctrl+K     { move-window-up; }
+    Mod+Ctrl+L     { move-column-right; }
+
+    Mod+Home { focus-column-first; }
+    Mod+End  { focus-column-last; }
+    Mod+Ctrl+Home { move-column-to-first; }
+    Mod+Ctrl+End  { move-column-to-last; }
+
+    Mod+Shift+Left  { focus-monitor-left; }
+    Mod+Shift+Down  { focus-monitor-down; }
+    Mod+Shift+Up    { focus-monitor-up; }
+    Mod+Shift+Right { focus-monitor-right; }
+    Mod+Shift+H     { focus-monitor-left; }
+    Mod+Shift+J     { focus-monitor-down; }
+    Mod+Shift+K     { focus-monitor-up; }
+    Mod+Shift+L     { focus-monitor-right; }
+
+    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
+
+    Mod+Page_Down      { focus-workspace-down; }
+    Mod+Page_Up        { focus-workspace-up; }
+    Mod+U              { focus-workspace-down; }
+    Mod+I              { focus-workspace-up; }
+    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
+    Mod+Ctrl+U         { move-column-to-workspace-down; }
+    Mod+Ctrl+I         { move-column-to-workspace-up; }
+
+    Mod+Shift+Page_Down { move-workspace-down; }
+    Mod+Shift+Page_Up   { move-workspace-up; }
+    Mod+Shift+U         { move-workspace-down; }
+    Mod+Shift+I         { move-workspace-up; }
+
+    Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+
+    Mod+WheelScrollRight      { focus-column-right; }
+    Mod+WheelScrollLeft       { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+
+    Mod+Shift+WheelScrollDown      { focus-column-right; }
+    Mod+Shift+WheelScrollUp        { focus-column-left; }
+    Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
+
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // --- window / column manipulation -----------------------------------
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-column-width-back; }
+
+    Mod+Ctrl+Shift+R { switch-preset-window-height; }
+    Mod+Ctrl+R { reset-window-height; }
+
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+
+    Mod+M { maximize-window-to-edges; }
+
+    Mod+Ctrl+F { expand-column-to-available-width; }
+
+    Mod+C { center-column; }
+
+    Mod+Ctrl+C { center-visible-columns; }
+
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    Mod+W { toggle-column-tabbed-display; }
+
+    // --- screenshots ------------------------------------------------------
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+}

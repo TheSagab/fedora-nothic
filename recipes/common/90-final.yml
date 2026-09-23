@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Last steps of the build, run for every variant.
+
+modules:
+  # Installs the cosign public key + policy so `bootc switch`/`rpm-ostree
+  # rebase` accept this image and its future updates as signed. Must be the
+  # last module of the build.
+  - type: signing

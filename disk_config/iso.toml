@@ -1,0 +1,9 @@
+# bootc-image-builder configuration for the anaconda-iso installer image.
+#
+# The installer runs Anaconda from the bootc-image-builder container and
+# installs this image as its payload, so the account, locale and disk layout
+# are chosen during installation. Only the minimum disk size is pinned here.
+
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "20 GiB"

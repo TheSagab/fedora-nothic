@@ -1,0 +1,71 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Base system: things that are not niri/Noctalia specific but a Wayland desktop
+# needs. Everything here is installed on top of ghcr.io/ublue-os/base-main.
+
+modules:
+  - type: dnf
+    install:
+      # Weak dependencies are off so the image stays predictable: niri alone
+      # would otherwise pull in waybar, alacritty and swaylock through
+      # Recommends. Everything we actually want is listed explicitly.
+      install-weak-deps: false
+      packages:
+        # --- graphics / rendering stack ---------------------------------
+        - mesa-dri-drivers
+        - mesa-vulkan-drivers
+        - mesa-libEGL
+        - mesa-libGL
+        - libva-utils
+        - vulkan-tools
+        - vulkan-loader
+
+        # --- networking -------------------------------------------------
+        - NetworkManager
+        - NetworkManager-wifi
+        - NetworkManager-bluetooth
+        - bluez
+        - bluez-tools
+
+        # --- audio (Noctalia talks to PipeWire directly) ----------------
+        - pipewire
+        - pipewire-alsa
+        - pipewire-pulseaudio
+        - pipewire-utils
+        - wireplumber
+        - playerctl
+
+        # --- power / hardware -------------------------------------------
+        - upower
+        - brightnessctl
+        - ddcutil
+
+        # --- secrets (needed for Noctalia clipboard history / CalDAV) ---
+        - gnome-keyring
+
+        # --- fonts and icons --------------------------------------------
+        - dejavu-sans-fonts
+        - dejavu-sans-mono-fonts
+        - google-noto-sans-fonts
+        - google-noto-emoji-fonts
+        - jetbrains-mono-fonts-all
+        - fontawesome-fonts-all
+        - papirus-icon-theme
+        - adwaita-cursor-theme
+        - sound-theme-freedesktop
+
+        # --- session/CLI plumbing ---------------------------------------
+        - xdg-utils
+        - xdg-user-dirs
+        - bash-completion
+        - zsh
+        - fish
+        - polkit
+        - flatpak
+        - rsync
+        # `skopeo` and `jq` are not strictly part of the desktop, but the
+        # BlueBuild `akmods` module (recipes/nvidia/akmods.yml) shells out to
+        # both, so they have to be present before that module runs.
+        - jq
+        - skopeo

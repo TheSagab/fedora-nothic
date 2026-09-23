@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# niri, the scrollable-tiling Wayland compositor, plus everything it needs to
+# be a usable session: a login manager, XDG desktop portals and XWayland.
+
+modules:
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        # --- the compositor ---------------------------------------------
+        # Fedora ships niri itself; xwayland-satellite is a hard dependency
+        # of it and is what gives us XWayland support.
+        - niri
+        - xwayland-satellite
+
+        # --- login manager ----------------------------------------------
+        # greetd is a minimal, compositor-agnostic greeter daemon.
+        # tuigreet is a small TUI greeter; see README.md for how to swap in a
+        # graphical greeter (gtkgreet, SDDM, ...) instead.
+        - greetd
+        - tuigreet
+
+        # --- XDG desktop portals ----------------------------------------
+        # niri ships /usr/share/xdg-desktop-portal/niri-portals.conf which
+        # picks these two backends: gnome for screencast (screen sharing) and
+        # gtk for file pickers, printing, ...  Neither pulls in GNOME Shell.
+        - xdg-desktop-portal
+        - xdg-desktop-portal-gnome
+        - xdg-desktop-portal-gtk
+
+        # --- Qt apps on Wayland -----------------------------------------
+        - qt5-qtwayland
+        - qt6-qtwayland
+
+        # --- output / display helpers -----------------------------------
+        - wlr-randr

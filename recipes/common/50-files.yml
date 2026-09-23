@@ -1,0 +1,20 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Everything under files/system/ is copied verbatim onto / of the image, and
+# everything under files/justfiles/ becomes a ujust recipe.
+#
+# Note that files are copied to /etc (not /usr/etc): on atomic Fedora the /etc
+# contents of the image become /usr/etc at deployment time, which is exactly
+# the "vendor defaults" behaviour we want, while /etc stays editable by the
+# local user. See https://blue-build.org/blog/preferring-system-etc/
+
+modules:
+  - type: files
+    files:
+      - source: system
+        destination: /
+
+  - type: justfiles
+    include:
+      - niri.just

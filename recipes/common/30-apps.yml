@@ -1,0 +1,45 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# The everyday applications a Wayland desktop needs. niri and Noctalia
+# deliberately do not bundle a terminal, launcher or file manager, so we pick
+# one of each here.
+#
+# Swap any of these for your favourites - just keep the matching key bindings
+# in files/system/etc/niri/config.kdl in sync.
+
+modules:
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        # --- terminal, launcher, clipboard ------------------------------
+        - foot
+        - fuzzel
+        - wl-clipboard
+
+        # --- file manager + its integrations ----------------------------
+        # Note the capital T: Fedora's package is called Thunar.
+        - Thunar
+        - thunar-volman
+        - thunar-archive-plugin
+        - tumbler
+        - gvfs
+        - gvfs-mtp
+        - gvfs-gphoto2
+        - gvfs-smb
+        - gvfs-nfs
+        - gvfs-fuse
+        - gvfs-archive
+
+        # --- media and archives -----------------------------------------
+        - imv
+        - mpv
+        - file-roller
+        - 7zip
+        - unzip
+        - cpio
+
+        # --- screenshots (Noctalia has its own UI, these are for scripts) -
+        - grim
+        - slurp
