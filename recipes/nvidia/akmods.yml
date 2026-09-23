@@ -29,4 +29,9 @@ modules:
 
   # The NVIDIA driver adds modprobe/dracut configuration, so the initramfs
   # has to be regenerated for early KMS to work.
+  #
+  # ORDER MATTERS: nvidia-install.sh rewrites
+  # /usr/lib/dracut/dracut.conf.d/99-nvidia.conf to force-load the driver (and to
+  # pre-load i915/amdgpu so Chromium can still use the iGPU), so this must come
+  # after the akmods module - otherwise the initramfs is built without it.
   - type: initramfs

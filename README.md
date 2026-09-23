@@ -296,8 +296,20 @@ for it.
   to `/usr/share/ublue-os/just/60-custom.just`; check that the file contains the
   import line for `/usr/share/bluebuild/justfiles/niri.just`.
 * **Build fails with "Could not depsolve transaction" in the akmods module**:
-  upstream `ublue-os/akmods` has not caught up with the current kernel yet.
-  Wait for their next build and re-run.
+  the `kmod-nvidia` RPM requires `kernel-uname-r = <version>`, so it only installs
+  when the base image's kernel matches the one the akmods image was built for.
+  The error names the requirement, which is the fastest diagnostic:
+
+  ```
+  nothing provides kernel-uname-r = 7.2.6-200.fc44.x86_64 needed by kmod-nvidia-3:...
+  ```
+
+  Compare that version against `ostree.linux` on
+  `ghcr.io/ublue-os/base-main:44` and on the akmods image. This is a transient
+  window after a Fedora kernel bump: upstream `ublue-os/akmods` has not caught up
+  yet. Wait for their next build and re-run. Note this image never pulls a kernel
+  of its own - the resolved package set contains no `kernel*` package, only
+  `kmod`/`kmod-libs` - so the base image's kernel is what the kmod must match.
 
 ## Assumptions this image makes, and how to change them
 
