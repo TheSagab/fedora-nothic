@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
+#
+# Terra (https://terrapkg.com) - the community repository for the packages
+# Fedora does not ship. This image needs two of them:
+#
+#   noctalia-greeter   the login greeter (recipes/common/10-niri.yml)
+#   ghostty            the default terminal (recipes/common/30-apps.yml)
+#
+# Terra is bootstrapped by installing its release RPM, which is what Terra's own
+# installation instructions do:
+#
+#   dnf install --nogpgcheck \
+#     --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+#     terra-release
+#
+# About that --nogpgcheck: it applies only to the single bootstrap RPM. That RPM
+# is what carries the repository definition *and* the GPG key, so there is no key
+# yet with which to verify it - it is a chicken-and-egg bootstrap, not a general
+# relaxation. The key is imported into the rpm keyring immediately afterwards, and
+# gpgcheck=1 is on for the repository, so every package pulled from Terra from then
+# on is verified against it. $releasever is dnf's own variable (44 here), left in
+# single quotes so the shell does not eat it.
+#
+# The BlueBuild `dnf` module cannot express --repofrompath, hence the snippet.
+#
+# The second module replaces the repo file that RPM just installed with our own
+# copy, which points baseurl at repos.fyralabs.com instead of the metalink.
+# That single change is the whole difference; gpgcheck=1 and repo_gpgcheck=1 are
+# left as Terra ships them. The comments at the top of that file explain why,
+# with the measurements.
+#
+# The third module is the check: it asks Terra for the two packages this image
+# takes from it, so that a repository problem stops the build here, naming
+# itself, instead of surfacing as "No match for argument: ghostty" two modules
+# later. It also warms the metadata cache for the installs that follow.
+#
+# Two notes on keeping Terra enabled in the finished image:
+#
+#   * Terra sets no repo priority, so for a package that both Terra and Fedora
+#     ship, dnf picks the higher version. If you would rather Fedora always win,
+#     add a drop-in with a priority above Fedora's default of 99, e.g.
+#     /etc/yum.repos.d/terra.repo.d/priority.conf containing
+#       [terra]
+#       priority=100
+#   * Terra is a third-party repository. It is used by Ultramarine, Bazzite,
+#     Nobara and others, but you are adding a trust root to your system.
+
+modules:
+  - type: script
+    snippets:
+      - |
+        set -eu
+        dnf5 install -y --nogpgcheck \
+          --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+          terra-release
+        # Fail here, with a clear reason, rather than in a later module.
+        grep -q '^enabled=1' /etc/yum.repos.d/terra.repo
+        # Import Terra's key into the rpm keyring now. Packages from Terra are
+        # signature checked (gpgcheck=1), and dnf would otherwise stop to ask,
+        # which a build cannot answer. rpm does not know dnf's $releasever, so
+        # the version comes from rpm's own %fedora macro.
+        rpm --import "/etc/pki/rpm-gpg/RPM-GPG-KEY-terra$(rpm -E %fedora)"
+        echo "Terra repository added and enabled, key imported."
+
+  - type: files
+    files:
+      - source: system/etc/yum.repos.d/terra.repo
+        destination: /etc/yum.repos.d/terra.repo
+
+  - type: script
+    snippets:
+      - |
+        set -eu
+        # Resolve both packages through the repository definition that the rest
+        # of the build will use. A failure here is a Terra problem, not an image
+        # problem.
+        found=$(dnf5 repoquery --repo terra --available ghostty noctalia-greeter) || {
+          echo "ERROR: Terra could not be queried. Is repos.fyralabs.com reachable?" >&2
+          exit 1
+        }
+        if [ -z "$found" ]; then
+          echo "ERROR: Terra returned no packages at all, so its metadata did not" >&2
+          echo "       load. Check files/system/etc/yum.repos.d/terra.repo." >&2
+          exit 1
+        fi
+        for pkg in ghostty noctalia-greeter; do
+          case "$found" in
+            *"$pkg"*) : ;;
+            *) echo "ERROR: Terra does not offer $pkg." >&2; exit 1 ;;
+          esac
+        done
+        echo "Terra offers ghostty and noctalia-greeter."
