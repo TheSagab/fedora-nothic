@@ -912,6 +912,14 @@ stand-in (it performs a real registry pull and writes the same `dir:` layout
 build environment had no SELinux. Both are noted because they are the only parts
 of the pipeline that were not the real thing.
 
+That limitation applied to the local environment only, and it has since been
+closed by the real thing: GitHub Actions built both images on the first run, both
+were published to `ghcr.io` and signed, and the plain image was then rebased onto
+a machine running Aurora (Fedora 44, bootc) and booted straight into niri with no
+manual steps. So the pipeline, the signing and the rebase path are all confirmed
+end to end; what remains untested from here is only the installer ISO and the
+NVIDIA variant on real hardware.
+
 Two things could be observed but not completed here, and both are the
 environment's fault rather than the image's:
 
