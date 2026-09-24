@@ -12,7 +12,7 @@
 # heavier when the applications below were added. Resolved against an empty root
 # with `dnf5 --installroot=<dir> --releasever=44 --use-host-config --assumeno
 # install --setopt=install_weak_deps=False`, the modules before this one come to
-# 465 packages and ~1 GiB, and this one takes the total to 1013 packages and
+# 465 packages and ~1 GiB, and this one takes the total to 1022 packages and
 # ~3 GiB. libvirt-daemon-kvm alone accounts for 163 of those packages and 261 MiB,
 # which is the qemu stack behind virt-manager.
 #
@@ -109,6 +109,17 @@ modules:
         - cliphist
         - pavucontrol
         - blueman
+
+        # --- capture and hardware ----------------------------------------
+        # satty annotates a screenshot, wf-recorder records the screen (both
+        # pair with the Print bindings and grim/slurp above), guvcview is the
+        # webcam viewer, and fwupd provides fwupdmgr for firmware updates.
+        #
+        # satty comes from Terra; the other three are in Fedora.
+        - satty
+        - wf-recorder
+        - guvcview
+        - fwupd
 
         # --- applications ------------------------------------------------
         # virt-manager plus the daemon it talks to. libvirt-daemon-kvm is the

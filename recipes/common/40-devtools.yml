@@ -19,8 +19,14 @@ modules:
       packages:
         - mise
 
-  # A small, opinionated set of dev/CLI tools that are useful on the host.
-  # Anything else belongs in a project's mise.toml or in a distrobox.
+  # A set of dev/CLI tools that are useful on the host, rather than a minimal
+  # one: the list below grew to include the prompt, history search, TUIs and
+  # git helpers. Anything project-specific still belongs in a project's
+  # mise.toml or in a distrobox.
+  #
+  # Weighed against an empty root this module takes the image from 1022 to 1133
+  # packages, so it is not free either - but almost all of it is shared with the
+  # desktop stack rather than new.
   - type: dnf
     install:
       install-weak-deps: false
@@ -36,6 +42,39 @@ modules:
         # Dotfile manager. Fedora carries it, so no COPR or tarball needed:
         # `chezmoi init <repo>` on a new machine is the whole workflow.
         - chezmoi
+
+        # --- shell and CLI quality of life -------------------------------
+        # starship is the prompt and atuin the history search. Neither does
+        # anything until it is initialised, so the hooks in 50-files.yml do that
+        # for fish, bash and zsh. starship comes from Terra; atuin from Fedora.
+        #
+        # atuin takes Ctrl-R, so fzf's own history widget is left unwired - see
+        # the note in /etc/fish/conf.d/atuin.fish.
+        - starship
+        - atuin
+        - fzf
+        - eza
+        - duf
+        - tldr
+        - fastfetch
+
+        # --- git ----------------------------------------------------------
+        # gh is GitHub's CLI, git-delta a diff pager and difftastic a
+        # structural diff. lazygit is deliberately absent: it is packaged in
+        # neither Fedora nor Terra, so `mise use -g ubi:jesseduffield/lazygit`
+        # (mise is installed and activated above) or the packaged `gitui` are
+        # the ways to get a TUI git client here.
+        - gh
+        - git-delta
+        - difftastic
+
+        # --- editors and TUIs ---------------------------------------------
+        # helix is the second editor, yazi a TUI file manager (Terra), k9s a
+        # Kubernetes TUI and gping a ping with a graph (Terra).
+        - helix
+        - yazi
+        - k9s
+        - gping
         # Container/OS tooling. distrobox and toolbox already come from the
         # Universal Blue base image; skopeo comes from 00-base.yml.
         - podman

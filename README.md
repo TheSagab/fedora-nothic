@@ -192,9 +192,11 @@ What else is on the image, beyond the desktop itself:
   file-roller, mousepad, zathura, galculator, calibre, transmission-gtk,
   obs-studio, virt-manager with libvirt-daemon-kvm.
 * **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
-  cliphist, grim and slurp, wl-clipboard, fuzzel.
-* **Development**: mise, chezmoi, git, neovim, ripgrep, fd-find, bat, tree, yq,
-  just, podman, buildah.
+  cliphist, satty, wf-recorder, guvcview, fwupd, grim and slurp, wl-clipboard,
+  fuzzel.
+* **Development**: mise, chezmoi, git, gh, neovim, helix, ripgrep, fd-find, bat,
+  eza, fzf, git-delta, difftastic, yazi, k9s, gping, duf, tldr, fastfetch,
+  starship, atuin, tree, yq, just, podman, buildah.
 
 Two of those need a step before they do anything: `gammastep` is a daemon you
 start yourself, and `virt-manager` needs your account in the `libvirt` group
@@ -338,8 +340,11 @@ throughout, as in the recipes.
 | Bluedevil | blueman |
 | Transmission | transmission-gtk |
 | Foliate, Okular (ebooks) | calibre |
-| GNOME's screen recorder | obs-studio |
+| GNOME's screen recorder | obs-studio, plus wf-recorder for a one-liner |
 | GNOME Boxes | virt-manager with libvirt-daemon-kvm (run `ujust libvirt-setup` once) |
+| Screenshot annotation | satty |
+| Cheese, Kamoso (webcam) | guvcview |
+| gnome-firmware, Discover (firmware) | fwupd, so `fwupdmgr` works |
 
 ### Worth adding, to finish the desktop
 
@@ -348,14 +353,10 @@ throughout, as in the recipes.
 | Partitioning (gnome-disks, KDE Partition Manager) | `gparted` | 7, 56 MiB |
 | Display arrangement (GNOME Displays, KScreen) | `wdisplays`, or `kanshi`; `wlr-randr` is already here | 1, under 1 MiB |
 | Appearance and theming (GNOME Tweaks) | `nwg-look` (Terra) | 1, 4 MiB |
-| Screenshot annotation | `satty` (Terra) | 1, 4 MiB |
-| Screen recording (GNOME's, Spectacle) | `wf-recorder` for a one-liner, obs-studio is already here for more | 1, under 1 MiB |
 | Network editor (plasma-nm) | `nm-connection-editor` | 10, 25 MiB |
 | Colour picker | `gpick`, or `gcolor3` | 1, 1 MiB |
 | Printing (GNOME Settings) | `cups` + `system-config-printer` | 36, 80 MiB |
 | Scanning (Document Scanner, Skanlite) | `xsane`; `simple-scan` is lighter on disk (7 packages, 4 MiB) | 4, 18 MiB |
-| Webcam (Cheese, Kamoso) | `guvcview` | 5, 5 MiB |
-| Firmware updates (gnome-firmware, Discover) | `fwupd` | 2, 11 MiB |
 | Remote desktop (GNOME Remote Desktop) | `wayvnc` | 3, under 1 MiB |
 | Software centre (GNOME Software, Discover) | `dnfdragora` | 8, 18 MiB |
 | Password manager (GNOME Passwords, KWallet) | `keepassxc` | 17, 71 MiB |
@@ -420,6 +421,23 @@ for anything else that asks polkit.
 `kf5-filesystem` come in through `xorriso`. They are directory-layout packages, a
 few KiB each, not the KDE desktop - `virt-manager` itself is GTK, and its
 transaction contains no `plasma`, `kwin` or KF6 libraries.
+
+**The shell tools are wired, and two of the ones asked for do not exist.**
+
+* `starship` and `atuin` do nothing until they are initialised, so the image
+  initialises them: `/etc/fish/conf.d/starship.fish` and `atuin.fish` for fish,
+  `/etc/profile.d/starship.sh` and `atuin.sh` for bash and zsh, all guarded on
+  interactivity so they stay out of scripts. atuin takes Ctrl-R, so fzf's own
+  history widget is deliberately left unwired - the note in `atuin.fish` says how
+  to swap them.
+* `lazygit` is packaged in neither Fedora nor Terra. `mise use -g
+  ubi:jesseduffield/lazygit` installs it (mise is here and activated), or `gitui`
+  and `tig` are the packaged TUI git clients.
+* `neofetch` was retired from Fedora, so `fastfetch` stands in for it.
+* `git-delta` and `difftastic` are installed but not configured, because both are
+  preferences rather than defaults: delta becomes git's pager with
+  `core.pager = delta` and `interactive.diffFilter = delta --color-only`, and
+  difftastic with `GIT_EXTERNAL_DIFF=difft`.
 
 ### What GNOME is actually in this image
 
@@ -784,8 +802,8 @@ Notes that came out of that verification and are easy to trip over:
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
   on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
   installing `blujust`.
-* Resolving the full package set with `dnf5` against an empty root gives 1106
-  packages and ~3 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
+* Resolving the full package set with `dnf5` against an empty root gives 1133
+  packages and ~4 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
   `gnome-session`, `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The
   only `gnome-*` packages are libraries and a keyring, not a desktop:
   `gnome-desktop3`/`gnome-desktop4` come from `xdg-desktop-portal-gnome` (which
