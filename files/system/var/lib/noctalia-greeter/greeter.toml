@@ -21,3 +21,22 @@
 # so this line is what keeps niri the default. Choosing Umbriel at login
 # overrides it from then on, because the greeter remembers your last session.
 default = "Niri"
+
+[output]
+# Manual UI scale, applied to every output. The greeter itself is the compositor
+# here (noctalia-greeter-compositor, the wlroots compositor bundled in the
+# noctalia-greeter package), and without this key it derives a scale per output:
+# first from the layout Noctalia synced into sync.toml with
+# `noctalia msg greeter-sync`, otherwise from the display geometry. That
+# geometry fallback is where a fractional scale such as 1.25 comes from on a
+# HiDPI panel.
+#
+# Setting it here is authoritative, because this file wins over sync.toml. Delete
+# the line to go back to the automatic behaviour.
+scale = 1.0
+
+# Different screens can be scaled individually instead, using the connector names
+# that `noctalia-greeter outputs --details` prints:
+#
+#   scales = "eDP-1:1; DP-1:1.25"
+#

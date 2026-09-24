@@ -366,11 +366,13 @@ below.
 ### Login screen
 
 **noctalia-greeter** comes from [Terra](https://terrapkg.com). It is a graphical
-greeter: greetd runs `/usr/bin/noctalia-greeter-session`, which starts the
-wlroots compositor bundled inside the greeter and draws the login screen there.
-That is why it needs `wlroots` (Fedora 44 ships 0.20.2, which is what it links
-against) and a real logind session - Fedora's greetd package already provides the
-latter via `pam_systemd.so` in `/usr/lib/pam.d/greetd-greeter`.
+greeter, and it is its own Wayland compositor: greetd runs
+`/usr/bin/noctalia-greeter-session`, which execs
+`/usr/bin/noctalia-greeter-compositor` - the wlroots compositor bundled in the
+same package - with the login UI as its client. There is no niri, cage or sway
+underneath it. That is why it needs `wlroots` (Fedora 44 ships 0.20.2, which is
+what it links against) and a real logind session - Fedora's greetd package
+already provides the latter via `pam_systemd.so` in `/usr/lib/pam.d/greetd-greeter`.
 
 Its settings live in `/var/lib/noctalia-greeter/`: `greeter.toml` for admin
 defaults (optional - built-in defaults are used if it is absent) and `sync.toml`,
@@ -378,6 +380,41 @@ which the greeter writes to remember your last session and colour scheme. This
 image creates that directory owned by the `greetd` user via
 `files/system/usr/lib/tmpfiles.d/`. To set defaults, copy the canonical example:
 <https://github.com/noctalia-dev/noctalia-greeter/blob/main/examples/greeter.toml>
+
+#### Greeter display scale
+
+The greeter's display settings are its own and do not affect your desktop
+session. Scale is resolved per output in this order:
+
+1. `[output] scale` in `greeter.toml`, which applies to every output
+2. a connector entry in `[output] scales`, from `greeter.toml` then `sync.toml`
+3. `1.0` when an `[output] layout` entry matches that output but no scale does
+4. an automatic scale derived from the display's EDID size and resolution,
+   capped at 2
+
+Step 4 is where a fractional scale such as 1.25 comes from on a HiDPI panel, and
+Noctalia can also copy your desktop's effective scale into `sync.toml` with
+`noctalia msg greeter-sync`.
+
+This image ships `[output] scale = 1.0` in
+`files/system/var/lib/noctalia-greeter/greeter.toml`, which wins over all of the
+above. To change it, edit `/var/lib/noctalia-greeter/greeter.toml` and restart
+the greeter, which is the documented way to apply display settings:
+
+```bash
+sudo systemctl restart greetd
+```
+
+`/var` is not replaced by image updates, so an edit there persists; the copy in
+this repository is what a fresh install gets. For per-monitor values use
+`scales = "eDP-1:1; DP-1:1.25"` instead, with connector names from
+`noctalia-greeter outputs --details`.
+
+Note that this does not scale the desktop session. niri guesses a scale the same
+way, from the monitor's physical size, so if your session sits at 1.25 as well,
+uncomment the `output` block in `files/system/etc/niri/config.kdl` (or your own
+copy) and set `scale 1`, or try it live with
+`niri msg output <connector> scale 1`.
 
 ### Choosing a compositor
 
