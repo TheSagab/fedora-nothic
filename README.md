@@ -278,6 +278,108 @@ should work, try adding `nvidia-drm.fbdev=1` the same way.
 
 ---
 
+## What a GNOME or KDE desktop would give you
+
+There is no GNOME or KDE session here: niri is the compositor, Noctalia is the
+shell, and greetd is the only display manager. The desktop utilities that come
+*with* those sessions are therefore not installed. This is what you would notice
+missing, and what to install instead.
+
+Every package below was resolved with `dnf5` against Fedora 44 (Terra where
+marked) on this image's package set, with `install_weak_deps=False`, so the
+counts are what adding it actually costs; anything already present costs
+nothing. Nothing in either table pulls `gnome-shell`, `mutter`, `gdm`,
+`plasma`, `kwin` or a KDE framework - the one exception, `virt-manager`, is
+noted under the tables.
+
+### Already covered
+
+| You would have used | This image ships |
+| --- | --- |
+| gnome-terminal, Konsole | ghostty on `Mod+T`, foot on `Mod+Shift+T` |
+| Nautilus, Dolphin | Thunar |
+| Image viewer (loupe, Gwenview) | imv |
+| Totem, Dragon | mpv |
+| Ark | file-roller, 7zip |
+| GNOME Activities, KRunner | Noctalia's launcher, fuzzel on `Mod+D` |
+| GNOME Screenshot, Spectacle | grim + slurp, and Noctalia's own UI |
+| gnome-shell's clipboard, Klipper | wl-clipboard |
+| gnome-keyring, KWallet | gnome-keyring |
+| GNOME Settings, System Settings | the niri config and Noctalia's settings |
+| GNOME Software, Discover | flatpak, on the command line |
+| gnome-shell's password prompts | Noctalia's polkit agent (see below) |
+
+### Worth adding, to finish the desktop
+
+| Missing | Install | Cost |
+| --- | --- | --- |
+| Text editor (gedit, Kate) | `mousepad` | 14 packages, 13 MiB |
+| PDF viewer (Evince, Okular) | `zathura` + `zathura-pdf-mupdf` | 15, 67 MiB |
+| Calculator (gnome-calculator, KCalc) | `galculator`, or `qalculate-gtk` | 1, 1 MiB |
+| System monitor (gnome-system-monitor) | `btop`, `htop`, or `bottom` (Terra) | 1, 2 MiB |
+| Disk usage (baobab, Filelight) | `ncdu`, or `gdu` | 1, 769 KiB |
+| Partitioning (gnome-disks, KDE Partition Manager) | `gparted` | 11, 31 MiB |
+| Display arrangement (GNOME Displays, KScreen) | `wdisplays`, or `kanshi`; `wlr-randr` is already here | 1, 178 KiB |
+| Appearance and theming (GNOME Tweaks) | `nwg-look` (Terra) | 1, 5 MiB |
+| Night light (GNOME Night Light) | `gammastep` | 1, 478 KiB |
+| Screenshot annotation | `satty` (Terra) | 1, 4 MiB |
+| Screen recording (GNOME's, Spectacle) | `wf-recorder` | 97, 131 MiB |
+| Clipboard history (Klipper) | `cliphist` | 6, 3 MiB |
+| Volume mixer (GNOME Settings, plasma-pa) | `pavucontrol` | 10, 11 MiB |
+| Network editor (plasma-nm) | `nm-connection-editor` | 13, 27 MiB |
+| Bluetooth (Bluedevil) | `blueman` | 12, 23 MiB |
+| Colour picker | `gpick`, or `gcolor3` | 1, 2 MiB |
+| Printing (GNOME Settings) | `cups` + `system-config-printer` | 48, 106 MiB |
+| Scanning (Document Scanner, Skanlite) | `xsane` | 5, 18 MiB |
+| Webcam (Cheese, Kamoso) | `guvcview` | 38, 55 MiB |
+| Firmware updates (gnome-firmware, Discover) | `fwupd` | 2, 12 MiB |
+| Remote desktop (GNOME Remote Desktop) | `wayvnc` | 79, 115 MiB |
+| Software centre (GNOME Software, Discover) | `dnfdragora` | 9, 19 MiB |
+| Password manager (GNOME Passwords, KWallet) | `keepassxc` | 21, 72 MiB |
+
+### Applications you may want
+
+| Missing | Install | Cost |
+| --- | --- | --- |
+| Mail, calendar, contacts (Evolution, KMail, KOrganizer) | `thunderbird` | 9 packages, 372 MiB |
+| Office suite | `libreoffice` | 133, 759 MiB |
+| Music (Rhythmbox, Elisa) | `strawberry`, or `audacious` | 38, 83 MiB |
+| Torrents | `transmission-gtk` | 10, 22 MiB |
+| Image editing | `gimp`, `inkscape` | 71, 266 MiB |
+| Video editing (Pitivi, Kdenlive) | `shotcut` | 184, 478 MiB |
+| Ebooks (Foliate, Okular) | `calibre` | 202, 843 MiB |
+| Notes (GNOME Notes, KNotes) | `Zim` | 6, 14 MiB |
+| Screen recording and streaming | `obs-studio` | 128, 278 MiB |
+| Virtual machines (GNOME Boxes) | `virt-manager` | 48, 69 MiB |
+
+### Two things worth knowing
+
+**GNOME applications are not off limits.** They are ordinary GTK applications
+and install without the desktop. Measured on this image: `nautilus` is 118
+packages and 143 MiB, `evince` 49 and 107 MiB, `totem` 84 and 63 MiB,
+`rhythmbox` 44 and 42 MiB, `gnome-calculator` 4 and 14 MiB,
+`gnome-system-monitor` 7 and 15 MiB, `baobab` 1 and 2 MiB, `gnome-disk-utility`
+40 and 28 MiB, `seahorse` 10 and 18 MiB - and not one of them pulls
+`gnome-shell`, `mutter`, `gdm` or `gnome-session`. What this image avoids is the
+*session*, not the toolkit, so if you would rather have Evince than zathura,
+install Evince.
+
+**`gparted` is the one real trap.** It needs a polkit authentication agent, and
+dnf satisfies that requirement with `gnome-shell` when nothing else provides it:
+on a package set without Noctalia, `dnf install gparted` resolves to 198
+packages and 570 MiB, including `gnome-shell`, `mutter` and `gdm`. Noctalia
+provides `PolicyKit-authentication-agent`, so on this image the same install is
+11 packages and 31 MiB. The providers you can add instead, if you ever build a
+variant without Noctalia, are `lxpolkit`, `xfce-polkit`, `mate-polkit`,
+`lxqt-policykit` or `polkit-kde`. It is worth knowing that this agent is not
+optional: it is what makes a graphical password prompt appear at all, for
+gparted, for Thunar mounting a disk, and for anything else that asks polkit.
+
+**`virt-manager` pulls two KDE packages.** `kde-filesystem` and
+`kf5-filesystem` come in through `xorriso`. They are directory-layout packages,
+a few KiB each, not the KDE desktop - `virt-manager` itself is GTK and the
+48-package transaction above contains no `plasma`, `kwin` or KF6 libraries.
+
 ## Customising
 
 The recipes are deliberately small and commented - edit them directly.
@@ -302,33 +404,13 @@ The recipes are deliberately small and commented - edit them directly.
   `command = "tuigreet --time --remember --asterisks --cmd niri-session"`;
   to hand the login screen to SDDM instead, `systemctl disable --now greetd`
   and `systemctl enable --now sddm`.
-* **A different file manager**: the image ships Thunar, listed with its
-  integrations in `recipes/common/30-apps.yml`. The table below is what each
-  alternative would add on top of this image, measured with `dnf5` the same way
-  as the weight note in that file (`--assumeno install --setopt=
-  install_weak_deps=False`, so a package already present costs nothing).
-
-  | File manager | Packages | Download | Installed | Brings in |
-  | --- | --- | --- | --- | --- |
-  | pcmanfm (GTK) | 47 | 9 MiB | 34 MiB | nothing new |
-  | caja | 54 | 14 MiB | 54 MiB | gtk-layer-shell |
-  | Thunar (current) | 66 | 18 MiB | 79 MiB | xfce4-panel, hard-required |
-  | nemo | 81 | 27 MiB | 59 MiB | xapp, gnome-online-accounts-libs |
-  | nautilus | 118 | 45 MiB | 143 MiB | gnome-desktop3/4, gnome-autoar |
-  | pcmanfm-qt | 51 | 47 MiB | 148 MiB | Qt6, KF6 |
-  | krusader | 139 | 110 MiB | 380 MiB | KDE |
-  | dolphin | 164 | 122 MiB | 425 MiB | KDE |
-  | yazi (TUI) | 1 | 12 MiB | 36 MiB | nothing, statically linked |
-  | felix (TUI) | 1 | 2 MiB | 4 MiB | nothing |
-  | nnn / ranger (TUI) | 1 | 119 KiB / 578 KiB | 233 KiB / 2 MiB | nothing |
-
-  Everything down to nautilus is GTK and pulls no new toolkit, which is why the
-  differences are small; the Qt and KDE ones would add a second toolkit to an
-  image that is deliberately GTK, and cost 4-10x as much. `yazi` and `felix`
-  come from Terra, the rest from Fedora (`lf` and `broot` are in neither).
-  To swap, replace the Thunar block in `30-apps.yml`, keep the `gvfs-*` entries
-  (they are what gives any of them trash, MTP, SMB and NFS), and check whether
-  `Mod+E` in `files/system/etc/niri/config.kdl` still points at something real.
+* **A different file manager**: the file manager is Thunar, with its
+  integrations, and that is settled - the alternatives were researched and then
+  dropped. The `Mod+E` binding in `files/system/etc/niri/config.kdl` spawns
+  `thunar`, which is the binary Fedora's `Thunar` package ships next to
+  `/usr/bin/Thunar`. To change it anyway, replace the Thunar block in
+  `recipes/common/30-apps.yml` (keep the `gvfs-*` entries - they are what gives
+  any file manager trash, MTP, SMB and NFS) and repoint the binding.
 
 ### Adding another variant
 
@@ -406,6 +488,15 @@ for it.
   `overlay` and `vfs` storage drivers, in the helper that applies the layer
   (`ApplyLayer`). Even pulling a 1 KiB image fails. Build on a real Linux host or
   let GitHub Actions do it.
+* **A graphical password prompt never appears** (mounting a disk in Thunar,
+  running `gparted`, anything that asks polkit): the polkit *authentication
+  agent* is what draws that prompt, and it is part of the desktop shell, not of
+  polkit itself. Noctalia provides it, so on this image nothing extra is needed;
+  if you build a variant without Noctalia you have to add one - `lxpolkit`,
+  `xfce-polkit`, `mate-polkit`, `lxqt-policykit` or `polkit-kde`. Without an
+  agent the privileged action simply fails, and dnf may also satisfy the
+  requirement with `gnome-shell` if you install something that needs one; see the
+  `gparted` note in the section above.
 * **The build fails in the Terra modules**: `05-terra.yml` checks that Terra
   offers `ghostty` and `noctalia-greeter`, and stops there with a message if it
   does not, so a repository problem fails early and names itself.
@@ -479,7 +570,7 @@ Nothing below requires touching more than one or two files.
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
-| File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image, or pick another file manager from the table under Customising |
+| File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image; the section above lists what to add for the things a GNOME or KDE desktop would have provided |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
