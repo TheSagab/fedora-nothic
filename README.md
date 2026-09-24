@@ -285,12 +285,13 @@ shell, and greetd is the only display manager. The desktop utilities that come
 *with* those sessions are therefore not installed. This is what you would notice
 missing, and what to install instead.
 
-Every package below was resolved with `dnf5` against Fedora 44 (Terra where
-marked) on this image's package set, with `install_weak_deps=False`, so the
-counts are what adding it actually costs; anything already present costs
-nothing. Nothing in either table pulls `gnome-shell`, `mutter`, `gdm`,
-`plasma`, `kwin` or a KDE framework - the one exception, `virt-manager`, is
-noted under the tables.
+The numbers are the **marginal** cost: each package was resolved with `dnf5`
+against Fedora 44 (Terra where marked) together with everything this image
+already installs, so anything already present costs nothing. For reference, this
+image's own application stack (`recipes/common/30-apps.yml`) resolves to 204
+packages and 244 MiB installed on a Fedora 44 rootfs with `niri`, Noctalia,
+ghostty and the dev tools, which is the baseline these figures are measured
+against. `install_weak_deps=False` throughout, as in the recipes.
 
 ### Already covered
 
@@ -298,11 +299,11 @@ noted under the tables.
 | --- | --- |
 | gnome-terminal, Konsole | ghostty on `Mod+T`, foot on `Mod+Shift+T` |
 | Nautilus, Dolphin | Thunar |
-| Image viewer (loupe, Gwenview) | imv |
+| Image viewer (loupe, Gwenview) | imv (no keybinding; it opens from Thunar or the command line) |
 | Totem, Dragon | mpv |
 | Ark | file-roller, 7zip |
-| GNOME Activities, KRunner | Noctalia's launcher, fuzzel on `Mod+D` |
-| GNOME Screenshot, Spectacle | grim + slurp, and Noctalia's own UI |
+| GNOME Activities, KRunner | Noctalia's launcher on `Mod+D` and `Mod+Space`; fuzzel is installed as a fallback but is not bound to anything |
+| GNOME Screenshot, Spectacle | niri's own `screenshot` on `Print`, `Ctrl+Print`, `Alt+Print`, plus grim and slurp for scripts, and Noctalia's UI |
 | gnome-shell's clipboard, Klipper | wl-clipboard |
 | gnome-keyring, KWallet | gnome-keyring |
 | GNOME Settings, System Settings | the niri config and Noctalia's settings |
@@ -311,74 +312,76 @@ noted under the tables.
 
 ### Worth adding, to finish the desktop
 
-| Missing | Install | Cost |
+| Missing | Install | Marginal cost |
 | --- | --- | --- |
-| Text editor (gedit, Kate) | `mousepad` | 14 packages, 13 MiB |
-| PDF viewer (Evince, Okular) | `zathura` + `zathura-pdf-mupdf` | 15, 67 MiB |
+| Text editor (gedit, Kate) | `mousepad` | 8 packages, 9 MiB |
+| PDF viewer (Evince, Okular) | `zathura` + `zathura-pdf-mupdf` | 9, 56 MiB |
 | Calculator (gnome-calculator, KCalc) | `galculator`, or `qalculate-gtk` | 1, 1 MiB |
-| System monitor (gnome-system-monitor) | `btop`, `htop`, or `bottom` (Terra) | 1, 2 MiB |
-| Disk usage (baobab, Filelight) | `ncdu`, or `gdu` | 1, 769 KiB |
-| Partitioning (gnome-disks, KDE Partition Manager) | `gparted` | 11, 31 MiB |
-| Display arrangement (GNOME Displays, KScreen) | `wdisplays`, or `kanshi`; `wlr-randr` is already here | 1, 178 KiB |
-| Appearance and theming (GNOME Tweaks) | `nwg-look` (Terra) | 1, 5 MiB |
-| Night light (GNOME Night Light) | `gammastep` | 1, 478 KiB |
+| System monitor (gnome-system-monitor) | `btop`, `htop`, or `bottom` (Terra) | 1, 1 MiB |
+| Disk usage (baobab, Filelight) | `ncdu`, or `gdu` | 1, under 1 MiB |
+| Partitioning (gnome-disks, KDE Partition Manager) | `gparted` | 7, 56 MiB |
+| Display arrangement (GNOME Displays, KScreen) | `wdisplays`, or `kanshi`; `wlr-randr` is already here | 1, under 1 MiB |
+| Appearance and theming (GNOME Tweaks) | `nwg-look` (Terra) | 1, 4 MiB |
+| Night light (GNOME Night Light) | `gammastep` | 1, under 1 MiB |
 | Screenshot annotation | `satty` (Terra) | 1, 4 MiB |
-| Screen recording (GNOME's, Spectacle) | `wf-recorder` | 97, 131 MiB |
-| Clipboard history (Klipper) | `cliphist` | 6, 3 MiB |
-| Volume mixer (GNOME Settings, plasma-pa) | `pavucontrol` | 10, 11 MiB |
-| Network editor (plasma-nm) | `nm-connection-editor` | 13, 27 MiB |
+| Screen recording (GNOME's, Spectacle) | `wf-recorder` | 1, under 1 MiB |
+| Clipboard history (Klipper) | `cliphist` | 5, 5 MiB |
+| Volume mixer (GNOME Settings, plasma-pa) | `pavucontrol` | 9, 11 MiB |
+| Network editor (plasma-nm) | `nm-connection-editor` | 10, 25 MiB |
 | Bluetooth (Bluedevil) | `blueman` | 12, 23 MiB |
-| Colour picker | `gpick`, or `gcolor3` | 1, 2 MiB |
-| Printing (GNOME Settings) | `cups` + `system-config-printer` | 48, 106 MiB |
-| Scanning (Document Scanner, Skanlite) | `xsane` | 5, 18 MiB |
-| Webcam (Cheese, Kamoso) | `guvcview` | 38, 55 MiB |
-| Firmware updates (gnome-firmware, Discover) | `fwupd` | 2, 12 MiB |
-| Remote desktop (GNOME Remote Desktop) | `wayvnc` | 79, 115 MiB |
-| Software centre (GNOME Software, Discover) | `dnfdragora` | 9, 19 MiB |
-| Password manager (GNOME Passwords, KWallet) | `keepassxc` | 21, 72 MiB |
+| Colour picker | `gpick`, or `gcolor3` | 1, 1 MiB |
+| Printing (GNOME Settings) | `cups` + `system-config-printer` | 36, 80 MiB |
+| Scanning (Document Scanner, Skanlite) | `xsane`; `simple-scan` is smaller | 4, 18 MiB |
+| Webcam (Cheese, Kamoso) | `guvcview` | 5, 5 MiB |
+| Firmware updates (gnome-firmware, Discover) | `fwupd` | 2, 11 MiB |
+| Remote desktop (GNOME Remote Desktop) | `wayvnc` | 3, under 1 MiB |
+| Software centre (GNOME Software, Discover) | `dnfdragora` | 8, 18 MiB |
+| Password manager (GNOME Passwords, KWallet) | `keepassxc` | 17, 71 MiB |
+
+`wf-recorder` and `guvcview` are as cheap as they are because mpv already brings
+the ffmpeg stack, and `mousepad` because Thunar already brings GTK and XFCE.
 
 ### Applications you may want
 
-| Missing | Install | Cost |
+| Missing | Install | Marginal cost |
 | --- | --- | --- |
-| Mail, calendar, contacts (Evolution, KMail, KOrganizer) | `thunderbird` | 9 packages, 372 MiB |
-| Office suite | `libreoffice` | 133, 759 MiB |
-| Music (Rhythmbox, Elisa) | `strawberry`, or `audacious` | 38, 83 MiB |
-| Torrents | `transmission-gtk` | 10, 22 MiB |
-| Image editing | `gimp`, `inkscape` | 71, 266 MiB |
-| Video editing (Pitivi, Kdenlive) | `shotcut` | 184, 478 MiB |
-| Ebooks (Foliate, Okular) | `calibre` | 202, 843 MiB |
-| Notes (GNOME Notes, KNotes) | `Zim` | 6, 14 MiB |
-| Screen recording and streaming | `obs-studio` | 128, 278 MiB |
-| Virtual machines (GNOME Boxes) | `virt-manager` | 48, 69 MiB |
+| Mail, calendar, contacts (Evolution, KMail, KOrganizer) | `thunderbird` | 3 packages, 366 MiB |
+| Office suite | `libreoffice` | 118, 732 MiB |
+| Music (Rhythmbox, Elisa) | `strawberry`, or `audacious` | 22, 68 MiB |
+| Torrents | `transmission-gtk` | 10, 21 MiB |
+| Image editing | `gimp`, `inkscape` | 51, 236 MiB |
+| Video editing (Pitivi, Kdenlive) | `shotcut` | 82, 339 MiB |
+| Ebooks (Foliate, Okular) | `calibre` | 108, 712 MiB |
+| Notes (GNOME Notes, KNotes) | `Zim` | 5, 13 MiB |
+| Screen recording and streaming | `obs-studio` | 27, 143 MiB |
+| Virtual machines (GNOME Boxes) | `virt-manager` | 41, 63 MiB |
 
 ### Two things worth knowing
 
-**GNOME applications are not off limits.** They are ordinary GTK applications
-and install without the desktop. Measured on this image: `nautilus` is 118
-packages and 143 MiB, `evince` 49 and 107 MiB, `totem` 84 and 63 MiB,
-`rhythmbox` 44 and 42 MiB, `gnome-calculator` 4 and 14 MiB,
-`gnome-system-monitor` 7 and 15 MiB, `baobab` 1 and 2 MiB, `gnome-disk-utility`
-40 and 28 MiB, `seahorse` 10 and 18 MiB - and not one of them pulls
-`gnome-shell`, `mutter`, `gdm` or `gnome-session`. What this image avoids is the
-*session*, not the toolkit, so if you would rather have Evince than zathura,
-install Evince.
+**GNOME applications are not off limits.** They are ordinary GTK applications and
+install without the desktop. On the same basis: `nautilus` is 22 packages and
+33 MiB, `evince` 35 and 82 MiB, `totem` 34 and 31 MiB, `rhythmbox` 28 and
+30 MiB, `gnome-system-monitor` 7 and 15 MiB, `gnome-calculator` 4 and 13 MiB,
+`seahorse` 6 and 11 MiB, `gnome-disk-utility` 5 and 8 MiB, `baobab` 1 and 1 MiB -
+and not one of them pulls `gnome-shell`, `mutter`, `gdm` or `gnome-session`.
+What this image avoids is the *session*, not the toolkit, so if you would rather
+have Evince than zathura, install Evince.
 
 **`gparted` is the one real trap.** It needs a polkit authentication agent, and
-dnf satisfies that requirement with `gnome-shell` when nothing else provides it:
-on a package set without Noctalia, `dnf install gparted` resolves to 198
-packages and 570 MiB, including `gnome-shell`, `mutter` and `gdm`. Noctalia
-provides `PolicyKit-authentication-agent`, so on this image the same install is
-11 packages and 31 MiB. The providers you can add instead, if you ever build a
-variant without Noctalia, are `lxpolkit`, `xfce-polkit`, `mate-polkit`,
-`lxqt-policykit` or `polkit-kde`. It is worth knowing that this agent is not
-optional: it is what makes a graphical password prompt appear at all, for
-gparted, for Thunar mounting a disk, and for anything else that asks polkit.
+dnf satisfies that requirement with `gnome-shell` when nothing else provides it.
+Measured on this image with Noctalia removed, `gparted` resolves to 325 packages
+and 730 MiB, including `gnome-shell`, `mutter`, `gdm` and `gnome-session`;
+with Noctalia present - which provides `PolicyKit-authentication-agent` - the
+same install is 7 packages and 56 MiB. If you ever build a variant without
+Noctalia, add `lxpolkit`, `xfce-polkit`, `mate-polkit`, `lxqt-policykit` or
+`polkit-kde` instead. The agent is not optional in any case: it is what makes a
+graphical password prompt appear at all, for gparted, for mounting a disk, and
+for anything else that asks polkit.
 
 **`virt-manager` pulls two KDE packages.** `kde-filesystem` and
-`kf5-filesystem` come in through `xorriso`. They are directory-layout packages,
-a few KiB each, not the KDE desktop - `virt-manager` itself is GTK and the
-48-package transaction above contains no `plasma`, `kwin` or KF6 libraries.
+`kf5-filesystem` come in through `xorriso`. They are directory-layout packages, a
+few KiB each, not the KDE desktop - `virt-manager` itself is GTK, and its
+transaction contains no `plasma`, `kwin` or KF6 libraries.
 
 ## Customising
 
