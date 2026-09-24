@@ -21,6 +21,9 @@ modules:
   # 10-niri.yml and ghostty in 30-apps.yml.
   - from-file: common/05-terra.yml
   - from-file: common/10-niri.yml
+  # Umbriel is the second compositor. It builds from source, so it sits here,
+  # before the shell and the applications, and it needs nothing from them.
+  - from-file: common/15-umbriel.yml
   - from-file: common/20-noctalia.yml
   - from-file: common/30-apps.yml
   - from-file: common/40-devtools.yml

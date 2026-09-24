@@ -1,0 +1,23 @@
+# noctalia-greeter admin configuration for this image.
+#
+# Installed to /var/lib/noctalia-greeter/greeter.toml. The directory itself is
+# created at boot by
+# files/system/usr/lib/tmpfiles.d/90-fedora-nothic-greeter.conf and owned by the
+# greetd user, because its uid is allocated at boot; this file is root-owned and
+# read-only, which is what upstream wants for the admin config ("Sync and the
+# login UI never write it").
+#
+# Anything not set here keeps its built-in default. The full list of keys is in
+# the upstream example:
+#   https://github.com/noctalia-dev/noctalia-greeter/blob/main/examples/greeter.toml
+#
+# Note that the login UI's own choices (last session, colour scheme) live in
+# sync.toml, which the greeter writes, and that this file wins over it.
+
+[session]
+# The picker label, which is the session file's `Name=` field rather than its
+# file name: `noctalia-greeter sessions` prints "Niri" and "Umbriel" on this
+# image. Both compositors install a /usr/share/wayland-sessions/*.desktop file,
+# so this line is what keeps niri the default. Choosing Umbriel at login
+# overrides it from then on, because the greeter remembers your last session.
+default = "Niri"
