@@ -148,7 +148,29 @@ and Noctalia updates.
 
 ### Option A: rebase an existing Fedora Atomic system
 
-Works from Fedora Atomic, Silverblue, Bazzite, Bluefin, or another BlueBuild image.
+Works from Fedora Atomic, Silverblue, Bazzite, Bluefin, Aurora, or another
+BlueBuild image: they are all built on the same Universal Blue lineage, so a
+rebase is a normal operation rather than a migration. Aurora is worth calling out
+because it is the one that looks most different - KDE instead of niri - but at the
+image level it is the same kind of thing: a `bootc` image on Fedora 44 built from
+`ublue-os/base-main`, exactly like this one.
+
+On a **bootc** system - Aurora, Bazzite, Bluefin and current Fedora Atomic are all
+bootc now - one command is enough:
+
+```bash
+sudo bootc switch ghcr.io/<you>/fedora-nothic:latest
+sudo systemctl reboot
+```
+
+That works even though the image is signed, because `bootc` does not require
+signatures for generic images by default: it honours `/etc/containers/policy.json`,
+and nothing in it demands one. The image carries its own policy, so from the next
+update onwards your key is the one that is enforced.
+
+On an older **rpm-ostree** system the `ostree-image-signed:` transport *does*
+enforce the policy, and the policy for your key is not on the machine yet, so go
+through the unsigned image first:
 
 ```bash
 # 1. rebase to the unsigned image first, to pick up the signing policy
@@ -160,9 +182,25 @@ sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/<you>/fedora-nothic:
 sudo systemctl reboot
 ```
 
-On a `bootc` based system (Fedora 42+) `sudo bootc switch ghcr.io/<you>/fedora-nothic:latest`
-works too - but note that `bootc switch` is what applies kernel arguments, which
-matters for the NVIDIA variant.
+Whichever route you take, `bootc`/`rpm-ostree` applies kernel arguments as part of
+the switch, which matters for the NVIDIA variant, and the previous deployment stays
+on disk so you can pick it in the boot menu or run `rpm-ostree rollback` if the new
+one misbehaves.
+
+Before switching, two things are worth cleaning up on the old system, because both
+survive the rebase and can get in the way:
+
+* **Layered packages** (`rpm-ostree status` shows an "Layered" list): they stay
+  layered on top of the new image and may conflict with it. `rpm-ostree reset`
+  removes them all; re-add what you still want afterwards.
+* **Third-party repositories** you added under `/etc/yum.repos.d/`: those are
+  carried over too. Remove the ones you no longer need.
+
+What survives: everything in `/home` and `/var`, including your Flatpaks, their
+settings and any containers. What changes: `/usr` becomes this image's tree, so the
+KDE packages are gone, the session is niri or Umbriel instead of Plasma, and the
+login screen is noctalia-greeter instead of SDDM. Your old Plasma configuration
+stays in `~/.config` doing nothing.
 
 ### Option B: installer ISO
 
@@ -718,7 +756,7 @@ for it.
   The error names the requirement, which is the fastest diagnostic:
 
   ```
-  nothing provides kernel-uname-r = 7.2.6-200.fc44.x86_64 needed by kmod-nvidia-3:...
+  nothing provides kernel-uname-r = 7.2.7-200.fc44.x86_64 needed by kmod-nvidia-3:...
   ```
 
   Compare that version against `ostree.linux` on
@@ -888,7 +926,7 @@ Notes that came out of that verification and are easy to trip over:
   there and what could be removed.
 * For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-44` and
   `ghcr.io/ublue-os/base-main:44` both report
-  `ostree.linux = 7.2.6-200.fc44.x86_64`, i.e. the kmod RPMs are built for the
+  `ostree.linux = 7.2.7-200.fc44.x86_64`, i.e. the kmod RPMs are built for the
   exact kernel the base ships. If those ever diverge you get the depsolve error
   mentioned in Troubleshooting - check `rpm-ostree status`/`bootc status` for the
   running kernel and compare with the akmods image tag.
