@@ -8,20 +8,25 @@
 # Swap any of these for your favourites - just keep the matching key bindings
 # in files/system/etc/niri/config.kdl in sync.
 #
-# Weight warning: this is the heaviest module in the image. Resolved against an
-# empty root with `dnf5 --installroot=<dir> --releasever=44 --use-host-config
-# --assumeno install --setopt=install_weak_deps=False`, the modules before this
-# one come to 465 packages and ~1 GiB, and this one takes the total to 662
-# packages and ~2 GiB. Three stacks account for it, measured the same way and
-# each including the base system that package needs, so the figures overlap:
+# Weight warning: this is by far the heaviest module in the image, and it got
+# heavier when the applications below were added. Resolved against an empty root
+# with `dnf5 --installroot=<dir> --releasever=44 --use-host-config --assumeno
+# install --setopt=install_weak_deps=False`, the modules before this one come to
+# 465 packages and ~1 GiB, and this one takes the total to 850 packages and
+# ~3 GiB.
 #
-#   mpv      365 packages, 758 MiB   the ffmpeg stack
-#   Thunar   294 packages, 471 MiB   XFCE and gvfs
-#   ghostty  229 packages, 653 MiB   gtk4, libadwaita, gstreamer, cups, mesa
+# Measured on this image instead, so that anything already present costs nothing,
+# the largest single additions are:
 #
-# ghostty is in that list because it hard-requires gtk4, which drags the rest in.
-# If you would rather keep the image small, drop Thunar, mpv and file-roller here
-# and install those as Flatpaks instead; for the leanest possible image drop
+#   calibre            108 packages, 712 MiB   the ebook manager, the biggest item
+#   obs-studio          27 packages, 143 MiB   recording and streaming
+#   virt-manager        41 packages,  63 MiB   the GUI only, see its comment below
+#   zathura-pdf-mupdf    9 packages,  56 MiB
+#   transmission-gtk    10 packages,  21 MiB
+#
+# mpv, Thunar and ghostty were already the bulk of this module before those. If
+# you would rather keep the image small, drop Thunar, mpv, calibre and file-roller
+# here and install those as Flatpaks instead; for the leanest possible image drop
 # ghostty too and keep foot as the only terminal (remember to repoint Mod+T).
 #
 # Note that Thunar hard-requires xfce4-panel, so that comes along too. It is not
@@ -74,3 +79,41 @@ modules:
         # --- screenshots (Noctalia has its own UI, these are for scripts) -
         - grim
         - slurp
+
+        # --- text and documents -----------------------------------------
+        # mousepad is a plain GTK editor; zathura is the PDF viewer, with the
+        # mupdf backend (poppler is the alternative: zathura-pdf-poppler).
+        - mousepad
+        - zathura
+        - zathura-pdf-mupdf
+        - galculator
+
+        # --- monitoring --------------------------------------------------
+        # btop is the interactive system monitor, gdu a disk usage analyser.
+        # bottom comes from Terra; the other two are in Fedora.
+        - btop
+        - bottom
+        - gdu
+
+        # --- desktop integration -----------------------------------------
+        # gammastep is the night light. It is a daemon, so it does nothing until
+        # you run it; see the README for the two ways to use it.
+        #
+        # cliphist needs the watcher and keybinding that the niri config sets
+        # up, otherwise the binary has nothing to store.
+        #
+        # pavucontrol is the volume mixer and blueman the Bluetooth manager;
+        # Noctalia has its own control centre, but these go deeper.
+        - gammastep
+        - cliphist
+        - pavucontrol
+        - blueman
+
+        # --- applications ------------------------------------------------
+        # virt-manager is only the GUI. To actually run a VM you also need
+        # libvirt-daemon-kvm (which pulls the qemu stack, +169 packages) and
+        # your account in the libvirt group. See the README.
+        - transmission-gtk
+        - calibre
+        - obs-studio
+        - virt-manager

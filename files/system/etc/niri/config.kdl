@@ -234,6 +234,13 @@ spawn-at-startup "xdg-user-dirs-update"
 // wallpaper, control centre and OSDs.
 spawn-at-startup "noctalia"
 
+// Clipboard history. cliphist only stores what a watcher feeds it, and the
+// Mod+Ctrl+V binding below is what reads it back, so without this line the
+// cliphist binary has nothing to show. Its history lives in
+// $XDG_CACHE_HOME/cliphist/db. Remove both lines if you would rather not keep
+// a clipboard history.
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+
 // ---------------------------------------------------------------------------
 // Switch events
 // ---------------------------------------------------------------------------
@@ -261,6 +268,7 @@ binds {
     Mod+Shift+S hotkey-overlay-title="Noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab hotkey-overlay-title="Window switcher" { spawn-sh "noctalia msg window-switcher"; }
     Mod+E hotkey-overlay-title="Files: Thunar" { spawn "thunar"; }
+    Mod+Ctrl+V hotkey-overlay-title="Clipboard history" { spawn-sh "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
 
     // --- session --------------------------------------------------------
     Super+Alt+L hotkey-overlay-title="Lock the screen" { spawn-sh "noctalia msg session lock"; }

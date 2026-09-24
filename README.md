@@ -167,6 +167,7 @@ The most important key bindings (`Mod` is Super):
 | `Mod+S` | Noctalia control centre |
 | `Mod+Shift+S` | Noctalia settings |
 | `Mod+E` | file manager (Thunar) |
+| `Mod+Ctrl+V` | clipboard history (cliphist, picked with fuzzel) |
 | `Alt+Tab` | Noctalia window switcher |
 | `Mod+O` | niri overview |
 | `Super+Alt+L` | lock the screen (Noctalia) |
@@ -183,6 +184,20 @@ ujust noctalia-config    # copy the default Noctalia config into your home
 ujust niri-validate      # check the niri config for errors
 ujust set-default-shell  # change your login shell (defaults to fish)
 ```
+
+What else is on the image, beyond the desktop itself:
+
+* **Everyday**: ghostty and foot, Thunar with its gvfs integrations, imv, mpv,
+  file-roller, mousepad, zathura, galculator, calibre, transmission-gtk,
+  obs-studio, virt-manager.
+* **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
+  cliphist, grim and slurp, wl-clipboard, fuzzel.
+* **Development**: mise, chezmoi, git, neovim, ripgrep, fd-find, bat, tree, yq,
+  just, podman, buildah.
+
+Two of those need a step before they do anything: `gammastep` is a daemon you
+start yourself, and `virt-manager` needs `libvirt-daemon-kvm` plus your account
+in the `libvirt` group. Both are covered under "Things worth knowing" below.
 
 ### Login screen
 
@@ -286,12 +301,13 @@ shell, and greetd is the only display manager. The desktop utilities that come
 missing, and what to install instead.
 
 The numbers are the **marginal** cost: each package was resolved with `dnf5`
-against Fedora 44 (Terra where marked) together with everything this image
-already installs, so anything already present costs nothing. For reference, this
-image's own application stack (`recipes/common/30-apps.yml`) resolves to 204
-packages and 244 MiB installed on a Fedora 44 rootfs with `niri`, Noctalia,
-ghostty and the dev tools, which is the baseline these figures are measured
-against. `install_weak_deps=False` throughout, as in the recipes.
+against Fedora 44 (Terra where marked) together with everything else this image
+installs, so anything already present costs nothing - `wf-recorder` is one package
+because mpv already brings the ffmpeg stack, and `mousepad` was eight because
+Thunar already brings GTK and XFCE. The measurements were taken before the
+applications now listed as covered were added, when the image's own application
+stack came to 204 packages and 244 MiB installed; `install_weak_deps=False`
+throughout, as in the recipes.
 
 ### Already covered
 
@@ -309,26 +325,30 @@ against. `install_weak_deps=False` throughout, as in the recipes.
 | GNOME Settings, System Settings | the niri config and Noctalia's settings |
 | GNOME Software, Discover | flatpak, on the command line |
 | gnome-shell's password prompts | Noctalia's polkit agent (see below) |
+| gedit, Kate (text editor) | mousepad |
+| Evince, Okular (PDF) | zathura with the mupdf backend |
+| gnome-calculator, KCalc | galculator |
+| gnome-system-monitor | btop, and bottom for a second opinion |
+| baobab, Filelight (disk usage) | gdu |
+| GNOME Night Light | gammastep |
+| Klipper (clipboard history) | cliphist, wired to `Mod+Ctrl+V` |
+| GNOME Settings, plasma-pa (volume) | pavucontrol |
+| Bluedevil | blueman |
+| Transmission | transmission-gtk |
+| Foliate, Okular (ebooks) | calibre |
+| GNOME's screen recorder | obs-studio |
+| GNOME Boxes | virt-manager (see the note below about the daemon) |
 
 ### Worth adding, to finish the desktop
 
 | Missing | Install | Marginal cost |
 | --- | --- | --- |
-| Text editor (gedit, Kate) | `mousepad` | 8 packages, 9 MiB |
-| PDF viewer (Evince, Okular) | `zathura` + `zathura-pdf-mupdf` | 9, 56 MiB |
-| Calculator (gnome-calculator, KCalc) | `galculator`, or `qalculate-gtk` | 1, 1 MiB |
-| System monitor (gnome-system-monitor) | `btop`, `htop`, or `bottom` (Terra) | 1, 1 MiB |
-| Disk usage (baobab, Filelight) | `ncdu`, or `gdu` | 1, under 1 MiB |
 | Partitioning (gnome-disks, KDE Partition Manager) | `gparted` | 7, 56 MiB |
 | Display arrangement (GNOME Displays, KScreen) | `wdisplays`, or `kanshi`; `wlr-randr` is already here | 1, under 1 MiB |
 | Appearance and theming (GNOME Tweaks) | `nwg-look` (Terra) | 1, 4 MiB |
-| Night light (GNOME Night Light) | `gammastep` | 1, under 1 MiB |
 | Screenshot annotation | `satty` (Terra) | 1, 4 MiB |
-| Screen recording (GNOME's, Spectacle) | `wf-recorder` | 1, under 1 MiB |
-| Clipboard history (Klipper) | `cliphist` | 5, 5 MiB |
-| Volume mixer (GNOME Settings, plasma-pa) | `pavucontrol` | 9, 11 MiB |
+| Screen recording (GNOME's, Spectacle) | `wf-recorder` for a one-liner, obs-studio is already here for more | 1, under 1 MiB |
 | Network editor (plasma-nm) | `nm-connection-editor` | 10, 25 MiB |
-| Bluetooth (Bluedevil) | `blueman` | 12, 23 MiB |
 | Colour picker | `gpick`, or `gcolor3` | 1, 1 MiB |
 | Printing (GNOME Settings) | `cups` + `system-config-printer` | 36, 80 MiB |
 | Scanning (Document Scanner, Skanlite) | `xsane`; `simple-scan` is lighter on disk (7 packages, 4 MiB) | 4, 18 MiB |
@@ -348,15 +368,28 @@ the ffmpeg stack, and `mousepad` because Thunar already brings GTK and XFCE.
 | Mail, calendar, contacts (Evolution, KMail, KOrganizer) | `thunderbird` | 3 packages, 366 MiB |
 | Office suite | `libreoffice` | 118, 732 MiB |
 | Music (Rhythmbox, Elisa) | `strawberry`, or `audacious` | 22, 68 MiB |
-| Torrents | `transmission-gtk` | 10, 21 MiB |
 | Image editing | `gimp`, `inkscape` | 51, 236 MiB |
 | Video editing (Pitivi, Kdenlive) | `shotcut` | 82, 339 MiB |
-| Ebooks (Foliate, Okular) | `calibre` | 108, 712 MiB |
 | Notes (GNOME Notes, KNotes) | `Zim` | 5, 13 MiB |
-| Screen recording and streaming | `obs-studio` | 27, 143 MiB |
-| Virtual machines (GNOME Boxes) | `virt-manager` | 41, 63 MiB |
 
-### Two things worth knowing
+### Things worth knowing
+
+**Three of the installed applications need a step that a package cannot do.**
+
+* `virt-manager` is the GUI only. To run a VM you also need
+  `sudo dnf install libvirt-daemon-kvm` (+169 packages, the qemu stack) and your
+  account in the `libvirt` group (`sudo usermod -aG libvirt $USER`, then log out),
+  otherwise virt-manager opens with no connection to offer.
+* `gammastep` is a daemon, so installing it changes nothing by itself. Run
+  `gammastep -O 4000` for a fixed colour temperature, or `gammastep -c` with a
+  location (it can use geoclue) to follow the sun. Nothing starts it for you on
+  purpose - a screen that changes colour at login is not something to inflict on
+  someone who did not ask for it.
+* `cliphist` needs a watcher and a keybinding, both of which the niri config now
+  sets up: `spawn-at-startup "wl-paste" "--watch" "cliphist" "store"` and
+  `Mod+Ctrl+V`. If you would rather not keep a clipboard history, delete those
+  two lines from `files/system/etc/niri/config.kdl` (or from your own copy) and
+  the package can go too.
 
 **GNOME applications are not off limits.** They are ordinary GTK applications and
 install without the desktop. On the same basis: `nautilus` is 22 packages and
@@ -746,8 +779,8 @@ Notes that came out of that verification and are easy to trip over:
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
   on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
   installing `blujust`.
-* Resolving the full package set with `dnf5` against an empty root gives 764
-  packages and ~2 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
+* Resolving the full package set with `dnf5` against an empty root gives 950
+  packages and ~3 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
   `gnome-session`, `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The
   only `gnome-*` packages are libraries and a keyring, not a desktop:
   `gnome-desktop3`/`gnome-desktop4` come from `xdg-desktop-portal-gnome` (which

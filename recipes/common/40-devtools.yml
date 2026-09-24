@@ -33,6 +33,9 @@ modules:
         - tree
         - yq
         - just
+        # Dotfile manager. Fedora carries it, so no COPR or tarball needed:
+        # `chezmoi init <repo>` on a new machine is the whole workflow.
+        - chezmoi
         # Container/OS tooling. distrobox and toolbox already come from the
         # Universal Blue base image; skopeo comes from 00-base.yml.
         - podman
