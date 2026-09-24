@@ -24,7 +24,7 @@ modules:
   # git helpers. Anything project-specific still belongs in a project's
   # mise.toml or in a distrobox.
   #
-  # Weighed against an empty root this module takes the image from 1022 to 1133
+  # Weighed against an empty root this module takes the image from 1022 to 1134
   # packages, so it is not free either - but almost all of it is shared with the
   # desktop stack rather than new.
   - type: dnf
@@ -59,14 +59,14 @@ modules:
         - fastfetch
 
         # --- git ----------------------------------------------------------
-        # gh is GitHub's CLI, git-delta a diff pager and difftastic a
-        # structural diff. lazygit is deliberately absent: it is packaged in
-        # neither Fedora nor Terra, so `mise use -g ubi:jesseduffield/lazygit`
-        # (mise is installed and activated above) or the packaged `gitui` are
-        # the ways to get a TUI git client here.
+        # gh is GitHub's CLI, git-delta a diff pager, difftastic a structural
+        # diff, and lazygit a TUI client. lazygit comes from Terra, whose package
+        # is named golang-github-jesseduffield-lazygit and provides both
+        # /usr/bin/lazygit and the plain `lazygit` name used here.
         - gh
         - git-delta
         - difftastic
+        - lazygit
 
         # --- editors and TUIs ---------------------------------------------
         # helix is the second editor, yazi a TUI file manager (Terra), k9s a

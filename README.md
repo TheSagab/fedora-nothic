@@ -422,7 +422,7 @@ for anything else that asks polkit.
 few KiB each, not the KDE desktop - `virt-manager` itself is GTK, and its
 transaction contains no `plasma`, `kwin` or KF6 libraries.
 
-**The shell tools are wired, and two of the ones asked for do not exist.**
+**The shell tools are wired, and one of the ones asked for does not exist.**
 
 * `starship` and `atuin` do nothing until they are initialised, so the image
   initialises them: `/etc/fish/conf.d/starship.fish` and `atuin.fish` for fish,
@@ -430,10 +430,12 @@ transaction contains no `plasma`, `kwin` or KF6 libraries.
   interactivity so they stay out of scripts. atuin takes Ctrl-R, so fzf's own
   history widget is deliberately left unwired - the note in `atuin.fish` says how
   to swap them.
-* `lazygit` is packaged in neither Fedora nor Terra. `mise use -g
-  ubi:jesseduffield/lazygit` installs it (mise is here and activated), or `gitui`
-  and `tig` are the packaged TUI git clients.
-* `neofetch` was retired from Fedora, so `fastfetch` stands in for it.
+* `lazygit` comes from Terra, where the package is named
+  `golang-github-jesseduffield-lazygit` and provides both `/usr/bin/lazygit` and
+  the plain `lazygit` name that the recipe lists. Searching for `lazygit*` misses
+  it, which is how it looked absent at first; the version is 0.65.1.
+* `neofetch` is in neither Fedora (retired) nor Terra, so `fastfetch` stands in.
+  Terra carries `nerdfetch`, which is a different thing.
 * `git-delta` and `difftastic` are installed but not configured, because both are
   preferences rather than defaults: delta becomes git's pager with
   `core.pager = delta` and `interactive.diffFilter = delta --color-only`, and
@@ -802,7 +804,7 @@ Notes that came out of that verification and are easy to trip over:
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
   on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
   installing `blujust`.
-* Resolving the full package set with `dnf5` against an empty root gives 1133
+* Resolving the full package set with `dnf5` against an empty root gives 1134
   packages and ~4 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
   `gnome-session`, `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The
   only `gnome-*` packages are libraries and a keyring, not a desktop:
