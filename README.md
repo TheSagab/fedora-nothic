@@ -644,6 +644,14 @@ useradd -D | grep ^SHELL
 # in the Design notes and in 30-apps.yml come from. Run it on a Fedora 44 host.
 dnf5 --installroot=/var/tmp/checkroot --releasever=44 --use-host-config \
   --assumeno install --setopt=install_weak_deps=False <packages>
+
+# the marginal cost of one extra package, which is how the tables under
+# "What a GNOME or KDE desktop would give you" were measured: resolve the
+# image's own package list on its own (every `install: packages:` entry in
+# recipes/common/*.yml), then the same list plus the package you are asking
+# about, and subtract. dnf prints the package count and the installed size of
+# each transaction; `dnf5 repoquery --latest-limit=1 --queryformat
+# '%{installsize}'` gives exact bytes for the same set if you want them.
 ```
 
 Note that this image has never been built as a container here, so two caveats
