@@ -789,6 +789,103 @@ equivalent for creating archives). `file-roller`, `engrampa` and `ark` all
 install their binary as `/usr/bin/<name>`, so a bare `engrampa` on the wrapper's
 PATH resolves, and Thunar's "Extract here" would use it once file-roller is gone.
 
+## Development and gaming additions
+
+Nothing in this section is installed. It is a shortlist of what could be, with
+two things checked for every entry: that the package actually exists in a
+repository this image already enables, and what it costs to add.
+
+The lists come from `dnf5 repoquery` against Fedora 44 and Terra, matching on
+package name and, where that found nothing, on the binary a package provides
+(`dnf5 repoquery --whatprovides /usr/bin/<name>`). That the empty results are
+trustworthy was checked on purpose: `--whatprovides /usr/bin/lazygit` returns
+Terra's `golang-github-jesseduffield-lazygit`, which this image already installs,
+so a lookup that comes back empty really is empty. Terra moves often - everything
+from it is a nightly-style rebuild - so re-run these queries rather than trusting
+the names months from now.
+
+Sizes are what a dry run reported in a Fedora 44 rootfs that already contained
+this image's packages, so they are close to what a real build sees. Adding any of
+it means a rebuild and a rebase. Development tools belong in
+`recipes/common/40-devtools.yml` next to Zed and helix; gaming packages belong in
+`recipes/common/30-apps.yml`, or in a module of their own if the set grows.
+Recipe order only matters for Terra packages, which have to come after
+`05-terra.yml`.
+
+### Development tools
+
+Zed is already in the image (see the Development list above); everything in this
+table is not.
+
+| Area | Packages | Source |
+| --- | --- | --- |
+| Shell and scripting | `ShellCheck`, `shfmt`, `hadolint`, `act`, `pre-commit` | Fedora |
+| Git | `gitui`, `tig`, `git-absorb`, `git-lfs` | Fedora |
+| Terminal, files, docs | `tmux`, `glow`, `asciinema`, `vhs`, `meld`, `ncdu` | Fedora |
+| | `zellij`, `ouch` | Terra |
+| Small daily tools | `zoxide`, `direnv`, `procs`, `du-dust`, `hyperfine`, `tokei`, `hexyl`, `sad`, `entr` | Fedora |
+| System and debugging | `strace`, `gdb`, `perf`, `bpftrace`, `lsof`, `sysstat`, `iotop-c` | Fedora |
+| | `powertop`, `smartmontools`, `nvme-cli`, `lm_sensors`, `usbutils`, `pciutils` | Fedora |
+| Network | `mtr`, `nmap`, `tcpdump`, `grpcurl` | Fedora |
+| | `bandwhich` | Terra |
+| Containers, cloud, docs | `helm`, `opentofu`, `ansible`, `restic`, `borgbackup` | Fedora |
+| | `kubernetes1.37-client`, `pandoc-cli` | Fedora |
+| | `umdive`, which is how Terra packages `dive` | Terra |
+| Language servers for Zed and helix | `typos`, `yaml-language-server`, `terraform-ls` | Terra |
+
+The set that was measured as a group - `ShellCheck` `shfmt` `zellij` `zoxide`
+`direnv` `hyperfine` `tokei` `git-absorb` `gitui` `tig` `git-lfs` `procs` `hexyl`
+`sad` `glow` `dua-cli` `ncdu` `asciinema` `vhs` `entr` `act` `hadolint` - is
+121 MiB to download and 389 MiB installed, most of that zellij and vhs. For
+comparison, Zed alone is 309 MiB.
+
+Some names are not what you would guess, because either Fedora or Terra chose
+differently:
+
+| You would search for | Install this |
+| --- | --- |
+| `shellcheck` | `ShellCheck` (capital S and C) |
+| `pandoc` | `pandoc-cli` |
+| `kubectl` | `kubernetes1.37-client` |
+| `dust` | `du-dust` |
+| `dive` | `umdive`, from Terra |
+| `lazygit` | `golang-github-jesseduffield-lazygit`, from Terra, already installed |
+| `terraform` | nothing; `opentofu` is the maintained successor |
+
+### Gaming
+
+The core set, and what would actually go into the image if this were being added
+now: `gamemode` (raises the CPU governor and scheduling priority per game, the
+best value here), `mangohud` with `goverlay` (the FPS and frame-time overlay and
+its configuration GUI), `gamescope` (the micro-compositor used for resolution
+scaling and FSR), `vkBasalt` (post-processing and sharpening), `steam-devices`
+(the udev rules controllers need), `nvtop` (GPU monitoring that understands the
+NVIDIA driver) and `lact` (fan curves, power limits and clocks for NVIDIA and
+AMD, from Terra). The seven Fedora ones are 35 MiB to download and 150 MiB
+installed together.
+
+Beyond that, from Fedora: `corectrl` and `openrgb` for AMD tuning and RGB,
+`input-remapper` and `antimicrox` for remapping input devices, and the emulators
+`retroarch`, `dolphin-emu`, `mame` and `scummvm`. From Terra: `xone` for Xbox
+controllers, `moonlight-qt` for game streaming, and `heroic-games-launcher`,
+`prismlauncher`, `steamtinkerlaunch`, `vesktop` and `discord`. From Fedora, the
+other launchers: `lutris`, `bottles`, `wine` and `winetricks`.
+
+Steam deserves a note. Terra packages it as `steam`, but the dry run is 183
+packages, 124 MiB to download and 415 MiB installed, because it drags in the
+32-bit graphics stack, and on a bootc image that also means a reboot. Flatpak
+handles Steam's runtime sandboxing better anyway, so the recommendation is
+`flatpak install flathub com.valvesoftware.Steam` and keeping the image lean.
+`steam-devices` is worth having either way.
+
+### Not packaged in Fedora or Terra
+
+These came back empty from both, so they need a COPR, `cargo install`, or
+Flatpak rather than a line in a recipe: `lazydocker` `actionlint` `git-cliff`
+`watchexec` `ast-grep` `taplo` `cosign` `syft` `lefthook` `marksman` `pueue` `sd`
+`xh` `websocat` `ripgrep-all` `doggo` `dasel` (dev), and `pcsx2` `ppsspp`
+`sunshine` `protonup-qt` (gaming).
+
 ## Customising
 
 The recipes are deliberately small and commented - edit them directly.
@@ -1028,10 +1125,15 @@ umbriel --version                  # the compositor runs, even without a session
 rpm -q umbriel-nightly xdg-desktop-portal-umbriel-nightly
 
 # Terra is registered, with this image's repo file in place rather than Terra's
-# own, and carries the two packages this image takes from it
+# own, and carries the packages this image takes from it
 grep -c metalink /etc/yum.repos.d/terra.repo      # expect 0
 grep -c '^repo_gpgcheck=0' /etc/yum.repos.d/terra.repo   # expect 2
 dnf repoquery --repo terra noctalia-greeter ghostty
+
+# the suggestions under "Development and gaming additions" still exist, and
+# which repository each of them resolves from
+dnf repoquery --available --queryformat '%{name} [%{repoid}]\n' \
+  ShellCheck shfmt zellij zoxide gamemode mangohud gamescope nvtop lact
 
 # Noctalia accepts the shipped config keys
 noctalia config validate ~/.config/noctalia/config.toml
