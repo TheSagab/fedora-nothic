@@ -423,6 +423,14 @@ cursor theme and one application. `file-roller` is the only piece that is a GNOM
 *application* rather than a dependency of something else, and the only one that
 is genuinely easy to replace.
 
+That replacement was checked rather than assumed: `engrampa` installs on this
+image, `thunar-archive-plugin` ships
+`/usr/libexec/thunar-archive-plugin/engrampa.tap`, and that wrapper's body is
+`exec engrampa --extract-to="$pwd" --extract-here --force "$@"` (and the
+equivalent for creating archives). `file-roller`, `engrampa` and `ark` all
+install their binary as `/usr/bin/<name>`, so a bare `engrampa` on the wrapper's
+PATH resolves, and Thunar's "Extract here" would use it once file-roller is gone.
+
 ## Customising
 
 The recipes are deliberately small and commented - edit them directly.
