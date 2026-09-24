@@ -194,7 +194,32 @@ survive the rebase and can get in the way:
   layered on top of the new image and may conflict with it. `rpm-ostree reset`
   removes them all; re-add what you still want afterwards.
 * **Third-party repositories** you added under `/etc/yum.repos.d/`: those are
-  carried over too. Remove the ones you no longer need.
+  carried over too. To see which are yours rather than part of the image, ask rpm
+  who owns each file - anything unowned was added by hand:
+
+  ```bash
+  for f in /etc/yum.repos.d/*.repo; do
+      rpm -q --qf '%{name}\n' -f "$f" 2>/dev/null || echo "yours: $f"
+  done
+  ```
+
+  Do **not** clear the directory. `fedora.repo`, `fedora-updates.repo`,
+  `fedora-cisco-openh264.repo` and (on an NVIDIA system)
+  `negativo17-fedora-nvidia.repo` and `nvidia-container-toolkit.repo` all belong
+  to packages from the image - `fedora-repos` and `ublue-os-nvidia-addons`. They
+  are what makes `dnf` and `rpm-ostree install` work, and since `/etc` is merged
+  forward, deleting them takes that away on the new system too. COPRs have a
+  proper removal path, `sudo dnf copr remove <owner/project>`, which drops the
+  key as well.
+
+  Terra is worth singling out. If you installed it on the old system it is a
+  layered package, so `rpm-ostree reset` takes it (and everything else you
+  layered) with it - and the new image ships its own pinned `terra.repo`. A file
+  you leave behind wins the `/etc` merge, which would put you back on the
+  metalink and the stale-mirror problem described in Troubleshooting. After
+  switching, `grep -c metalink /etc/yum.repos.d/terra.repo` should print 0.
+  Leftover `.rpmsave` and `.rpmnew` files are inert - dnf only reads `*.repo` -
+  so they can stay or go.
 
 What survives: everything in `/home` and `/var`, including your Flatpaks, their
 settings and any containers. What changes: `/usr` becomes this image's tree, so the
