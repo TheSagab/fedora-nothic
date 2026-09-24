@@ -271,6 +271,67 @@ The most important key bindings (`Mod` is Super):
 | `Mod+Shift+Slash` | niri's built-in hotkey overlay |
 | `Mod+Shift+E` | leave the session |
 
+### Navigating niri, coming from a floating desktop
+
+If you are coming from KDE Plasma, GNOME or Windows, the first thing to
+internalise is that **nothing overlaps**. Windows sit side by side in a
+horizontal strip and you scroll through them. There is no stacking, no minimise,
+and no Alt-Tab cycle over hidden windows. Everything else follows from that.
+
+* **Between windows**: `Mod+Left`/`Mod+Right` (or `Mod+H`/`Mod+L`), or
+  `Mod+WheelScrollLeft`/`Right` with the mouse. A column can hold several windows
+  in a stack, which is niri's answer to tabbed windows: `Mod+Down`/`Mod+Up` moves
+  through the stack, `Mod+Comma` pulls the next window in, `Mod+Period` pushes it
+  out, and `Mod+W` shows the stack as tabs.
+* **Workspaces are a vertical strip**, one set per monitor and created on demand
+  rather than pre-declared like KDE's virtual desktops: `Mod+Page_Up`/`Page_Down`
+  (or `Mod+U`/`Mod+I`) moves between them, `Mod+1`..`Mod+9` jumps to one,
+  `Mod+Ctrl+1`..`Mod+Ctrl+9` moves the focused window there, and
+  `Mod+Shift+Page_Up`/`Page_Down` reorders the workspaces themselves.
+* **Monitors**: `Mod+Shift+Left`/`Right` focuses the next monitor, and
+  `Mod+Shift+Ctrl+Left`/`Right` moves a window to it.
+* **Width is a preset, not a drag**: `Mod+R` cycles the width presets,
+  `Mod+Minus`/`Mod+Equal` change it by 10%, `Mod+F` maximises the column,
+  `Mod+Ctrl+F` expands it to the available width, `Mod+M` maximises to the edges
+  and `Mod+Shift+F` is real fullscreen. With the mouse, hold `Mod` and drag with
+  the left button to move a window or the right button to resize it.
+* **Floating is opt-in**: `Mod+V` toggles the focused window between tiled and
+  floating, and `Mod+Shift+V` switches focus between the floating layer and the
+  tiled one - which is how you reach a floating dialog sitting on top. Some
+  dialogs float on their own; when one does not, `Mod+V` floats it, and the config
+  already floats Noctalia's settings window by rule.
+* **The overview** (`Mod+O`) zooms out to every workspace on every monitor, the
+  closest thing here to KDE's Activities.
+
+Where the rest of KDE's furniture went:
+
+| KDE | here |
+| --- | --- |
+| Alt+Tab, taskbar | `Mod+Left`/`Right`, or `Alt+Tab` for Noctalia's window switcher, or `Mod+O` for the overview |
+| KRunner (`Alt+Space`) | `Mod+D` or `Mod+Space` - Noctalia's launcher |
+| System tray, settings | `Mod+S` control centre, `Mod+Shift+S` Noctalia settings |
+| Virtual desktop pager | `Mod+Page_Up`/`Page_Down`, or the overview |
+| Close window | `Mod+Q` - there are no window buttons and no minimise |
+| Spectacle | `Print`, `Ctrl+Print` for the screen, `Alt+Print` for the window |
+| Klipper | `Mod+Ctrl+V`, cliphist through fuzzel |
+| Lock screen | `Super+Alt+L` |
+| Log out | `Mod+Shift+E` |
+| Display settings | Noctalia's settings, or `wlr-randr` from a terminal |
+| Keyboard layout | `localectl set-x11-keymap <layout> <model> <variant> <options>`; the config deliberately leaves `xkb` empty so niri follows `org.freedesktop.locale1` |
+| Window rules, autostart | the `window-rule` and `spawn-at-startup` blocks in `config.kdl` |
+
+Three habits worth forming:
+
+* **`Mod+Shift+Slash`** shows the full hotkey overlay, generated from the config
+  you are actually running. It is the fastest way to learn the rest.
+* **The config reloads live.** Edit `~/.config/niri/config.kdl` (start with
+  `ujust niri-config`) and save: niri applies it immediately, and if you break it
+  it says so on screen and keeps the previous one. `niri validate` checks a file
+  without applying it.
+* **Focus is click-to-focus**, not focus-follows-mouse, and there is no Alt-Tab
+  over all windows by default - you move spatially instead. Both are configurable,
+  in the `input` and `binds` sections.
+
 `ujust` helpers:
 
 ```bash
