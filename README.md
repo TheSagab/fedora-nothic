@@ -507,8 +507,21 @@ from `/etc/skel`; on an existing account run `ujust noctalia-config`, or just us
 the Settings window. `noctalia config export > my-config.toml` dumps the merged
 config.
 
-**ghostty** reads `~/.config/ghostty/config`; the image ships one in `/etc/skel`
-that launches fish and turns off client-side decorations.
+**ghostty** reads `~/.config/ghostty/config` and has no system-wide config file
+on Linux, so there is no image-wide one: the file in `/etc/skel` only reaches
+accounts created after the image was built. `ujust ghostty-config` copies it into
+your home, and `ghostty-config-reset` puts it back. It sets
+`command = /usr/bin/fish` so the terminal is fish even when the login shell is
+not, turns off client-side decorations, and picks the font and padding. Validate
+an edit with `ghostty +validate-config`, which prints the file, line and reason
+and exits nonzero when something is wrong.
+
+Worth knowing, because it is usually the real answer to "why is my terminal
+bash": ghostty leaves `command` unset by default and then uses `$SHELL`, falling
+back to your `passwd` entry. So if your login shell is fish, ghostty opens fish
+with no configuration at all, and if it is not, `ujust set-default-shell` changes
+it everywhere (ghostty, ssh, the console) rather than only in ghostty. The
+`command` key is the narrower fix when you want fish in the terminal only.
 
 **fish** reads `~/.config/fish/config.fish`, with system-wide snippets in
 `/etc/fish/conf.d/`.

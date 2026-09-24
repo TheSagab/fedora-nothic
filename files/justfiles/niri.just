@@ -62,6 +62,37 @@ noctalia-config:
     install -D -m644 /etc/skel/.config/noctalia/config.toml "$dest"
     echo "Wrote $dest - Noctalia hot-reloads it."
 
+# Copy the image's ghostty configuration into your home directory
+[group('Desktop')]
+ghostty-config:
+    #!/usr/bin/env bash
+    # The image ships this file in /etc/skel, which only reaches accounts created
+    # after the image was built. On an account that already existed, ghostty uses
+    # whatever the login shell is, so this is how you get the image's config,
+    # including `command = /usr/bin/fish`.
+    set -euo pipefail
+    dest="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
+    if [ -e "$dest" ]; then
+        echo "$dest already exists."
+        echo "Use 'ujust ghostty-config-reset' to overwrite it with the image default."
+        exit 1
+    fi
+    install -D -m644 /etc/skel/.config/ghostty/config "$dest"
+    # ghostty's own validator: it exits nonzero and prints the file, line and
+    # reason if the config is not usable.
+    ghostty +validate-config --config-file="$dest"
+    echo "Wrote $dest - ghostty picks it up in new windows."
+
+# Overwrite ~/.config/ghostty/config with the image's default configuration
+[group('Desktop')]
+ghostty-config-reset:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    dest="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
+    install -D -m644 /etc/skel/.config/ghostty/config "$dest"
+    ghostty +validate-config --config-file="$dest"
+    echo "Restored $dest from the image default."
+
 # Validate the niri configuration and report any errors
 [group('Desktop')]
 niri-validate:
