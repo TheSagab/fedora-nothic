@@ -2,10 +2,24 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 #
 # Terra (https://terrapkg.com) - the community repository for the packages
-# Fedora does not ship. This image needs two of them:
+# Fedora does not ship. This image takes these from it:
 #
-#   noctalia-greeter   the login greeter (recipes/common/10-niri.yml)
-#   ghostty            the default terminal (recipes/common/30-apps.yml)
+#   noctalia, noctalia-greeter   the shell and the login greeter
+#                                (20-noctalia.yml, 10-niri.yml)
+#   umbriel-nightly              the second compositor (15-umbriel.yml)
+#   ghostty + its -terminfo, -shell-integration and -fish-completion
+#                                the default terminal (30-apps.yml)
+#   xwayland-satellite           X11 support for niri and Umbriel (10-niri.yml)
+#   bottom, satty, cliphist      a btop-alike, the screenshot annotator and the
+#                                clipboard history (30-apps.yml)
+#   starship, yazi, gping, zed, zed-cli   the prompt, the TUI file manager, a
+#                                graphed ping and the graphical editor
+#                                (40-devtools.yml)
+#   lazygit                      as golang-github-jesseduffield-lazygit, which
+#                                is the name Terra uses for it (40-devtools.yml)
+#
+# mise also resolves from Terra, but 40-devtools.yml installs it from its
+# upstream COPR, which is where it is published first.
 #
 # Terra is bootstrapped by installing its release RPM, which is what Terra's own
 # installation instructions do:

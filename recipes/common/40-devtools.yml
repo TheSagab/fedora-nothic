@@ -69,12 +69,24 @@ modules:
         - lazygit
 
         # --- editors and TUIs ---------------------------------------------
-        # helix is the second editor, yazi a TUI file manager (Terra), k9s a
-        # Kubernetes TUI and gping a ping with a graph (Terra).
+        # helix is the second terminal editor, yazi a TUI file manager (Terra),
+        # k9s a Kubernetes TUI and gping a ping with a graph (Terra).
         - helix
         - yazi
         - k9s
         - gping
+
+        # Zed is the graphical editor. There is no Fedora package, so it comes
+        # from Terra, and it is by far the largest single item in this module:
+        # 309 MiB installed, 91 MiB to download, with one new dependency
+        # (libxkbcommon-x11). zed-cli is separate in Terra and is what puts the
+        # `zed` command on PATH for opening a file from a shell.
+        #
+        # It renders through Vulkan, so it needs mesa-vulkan-drivers from
+        # 00-base.yml. That works on both variants, including the NVIDIA one.
+        - zed
+        - zed-cli
+
         # Container/OS tooling. distrobox and toolbox already come from the
         # Universal Blue base image; skopeo comes from 00-base.yml.
         - podman

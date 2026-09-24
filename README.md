@@ -354,9 +354,15 @@ What else is on the image, beyond the desktop itself:
 * **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
   cliphist, satty, wf-recorder, guvcview, fwupd, grim and slurp, wl-clipboard,
   fuzzel.
-* **Development**: mise, chezmoi, git, gh, neovim, helix, ripgrep, fd-find, bat,
-  eza, fzf, git-delta, difftastic, yazi, k9s, gping, duf, tldr, fastfetch,
-  starship, atuin, tree, yq, just, podman, buildah.
+* **Development**: mise, chezmoi, git, gh, neovim, helix, **Zed** (from Terra),
+  ripgrep, fd-find, bat, eza, fzf, git-delta, difftastic, yazi, k9s, gping, duf,
+  tldr, fastfetch, starship, atuin, tree, yq, just, podman, buildah.
+
+Zed is the one graphical editor here and the largest single package in the
+image: 309 MiB installed, from Terra, because Fedora does not package it. It
+renders with Vulkan, which both variants provide. Terra also splits out
+`zed-cli`, which is what puts a `zed` command on `PATH` so you can open a file
+from a shell; the image installs both.
 
 Two of those need a step before they do anything: `gammastep` is a daemon you
 start yourself, and `virt-manager` needs your account in the `libvirt` group
