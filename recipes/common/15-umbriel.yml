@@ -9,87 +9,25 @@
 # greeter's picker, and files/system/var/lib/noctalia-greeter/greeter.toml names
 # Niri as the default one. Pick Umbriel at login and the greeter remembers it.
 #
-# Why this builds from source: Umbriel is in neither Fedora nor Terra, has no
-# COPR, and upstream publishes no releases or tags, so there is nothing to
-# install. It is built from a pinned commit instead.
+# Terra carries it as `umbriel-nightly`, versioned like
+# 0^20260918git.1a869f9 - a snapshot of a commit rather than a release, because
+# upstream publishes no releases or tags. The package installs /usr/bin/umbriel,
+# /usr/bin/start-umbriel, /usr/share/wayland-sessions/umbriel.desktop and the
+# umbriel-session/shutdown/service user units.
 #
-# Fedora 44 satisfies all of it, including the two tight requirements: it wants
-# wayland-protocols >= 1.47 (Fedora ships 1.47, updates 1.49) and the
-# wlroots-0.20 pkgconfig name (wlroots-devel 0.20.2 ships exactly that). Its
-# scene graph and renderer, umbrielfx, live in-tree, so there is no separate
-# scenefx package to satisfy.
+# It hard-requires xdg-desktop-portal-umbriel-nightly, so the portal backend
+# arrives with it and is deliberately not listed again below: that is what gives
+# Umbriel screencast and screenshot sharing through the portal API, and it ships
+# both umbriel.portal and umbriel-portals.conf, which xdg-desktop-portal selects
+# from the session's DesktopNames=Umbriel. Umbriel's other requirement,
+# xwayland-satellite, is already installed by 10-niri.yml.
 #
-# The build dependencies are installed, used and then removed inside this one
-# module. That costs build time but not image size: a layer records the net
-# result of the layer, and this is all one layer. The removal runs with
-# clean_requirements_on_remove off so it cannot take a runtime library with it -
-# Umbriel links wlroots, cairo, pango, libdrm and jemalloc, and all of those
-# stay.
-#
-# To bump it: take the newest commit from
-#   https://api.github.com/repos/noctalia-dev/umbriel/commits/main
-# and check that meson.build's dependency list still matches the list below.
-#
-# Not included: xdg-desktop-portal-umbriel, the portal backend that gives
-# Umbriel screencast and screenshot sharing through the portal API. It is a
-# separate project, also unpackaged and untagged, so it would be a second source
-# build. Without it, screen capture under Umbriel does not work; under niri it
-# still does. See the README.
+# There is nothing to pin or bump here: it is a nightly, so each image rebuild
+# takes whatever Terra published most recently.
 
 modules:
-  - type: script
-    snippets:
-      - |
-        set -eu
-
-        UMBRIEL_COMMIT=a607fdf72b2fcab3d5757e852e555c2eee74e7bc
-
-        # Everything the build needs. curl and pkgconf-pkg-config are not in the
-        # removal list below, and both are wanted anyway: rpm requires curl, and
-        # kmod - which systemd-udev, a protected package, requires - requires
-        # /usr/bin/pkg-config. They are in the Universal Blue base image already,
-        # so these lines only matter if that ever changes.
-        TOOLCHAIN_DEPS="meson ninja-build gcc-c++ \
-          wayland-devel wayland-protocols-devel wlroots-devel \
-          libxkbcommon-devel libinput-devel pixman-devel libdrm-devel \
-          tomlplusplus-devel json-devel cairo-devel pango-devel systemd-devel \
-          jemalloc-devel"
-
-        command -v curl >/dev/null 2>&1 || dnf5 install -y curl
-        dnf5 install -y --setopt=install_weak_deps=False pkgconf-pkg-config \
-          $TOOLCHAIN_DEPS
-
-        # GitHub's tarball for the pinned commit, so no git checkout is needed.
-        # The source and build directories are cleared first so that a retry in a
-        # reused container cannot trip over a half-configured build directory.
-        rm -rf /tmp/umbriel-src
-        curl -fsSL -o /tmp/umbriel.tar.gz \
-          "https://github.com/noctalia-dev/umbriel/archive/${UMBRIEL_COMMIT}.tar.gz"
-        mkdir -p /tmp/umbriel-src
-        tar -xzf /tmp/umbriel.tar.gz -C /tmp/umbriel-src --strip-components=1
-
-        # The commands PACKAGING.md documents: the configured data directory is
-        # compiled in, so the prefix here has to be the final one.
-        cd /tmp/umbriel-src
-        meson setup build --buildtype=release --prefix=/usr
-        meson compile -C build
-        meson install -C build
-
-        # Fail here, with a clear reason, rather than at the login screen.
-        test -x /usr/bin/umbriel
-        test -x /usr/bin/start-umbriel
-        test -f /usr/share/wayland-sessions/umbriel.desktop
-        test -f /usr/share/umbriel/config.toml
-
-        cd /
-        rm -rf /tmp/umbriel-src /tmp/umbriel.tar.gz
-
-        # Remove the toolchain again. clean_requirements_on_remove is off so this
-        # cannot take a runtime library with it - Umbriel links wlroots, cairo,
-        # pango, libdrm and jemalloc, and all of those stay. A failure here is
-        # reported rather than fatal: a slightly larger image beats a failed
-        # build, and the reason is in the log either way.
-        dnf5 remove -y --setopt=clean_requirements_on_remove=False $TOOLCHAIN_DEPS \
-          || echo "WARNING: could not remove the build toolchain; the image keeps it."
-
-        echo "Umbriel ${UMBRIEL_COMMIT} built, installed as a session, toolchain removed."
+  - type: dnf
+    install:
+      install-weak-deps: false
+      packages:
+        - umbriel-nightly

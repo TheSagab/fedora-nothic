@@ -9,7 +9,7 @@ compositor available as an alternative session:
 | Piece | What it is | Where it comes from |
 | --- | --- | --- |
 | [niri](https://github.com/niri-wm/niri) | scrollable-tiling Wayland compositor (the "WM"), and the default session | Fedora repos |
-| [Umbriel](https://github.com/noctalia-dev/umbriel) | second compositor, from the Noctalia developers, offered as an extra session | built from a pinned commit by `recipes/common/15-umbriel.yml` |
+| [Umbriel](https://github.com/noctalia-dev/umbriel) | second compositor, from the Noctalia developers, offered as an extra session | Terra, as `umbriel-nightly` |
 | [Noctalia](https://github.com/noctalia-dev/noctalia) | the shell: bar, launcher, notifications, lock screen, wallpaper, control centre, OSDs | Fedora repos (44+) |
 | [noctalia-greeter](https://github.com/noctalia-dev/noctalia-greeter) | the graphical login screen, matched to Noctalia | [Terra](https://terrapkg.com) |
 | [ghostty](https://ghostty.org) | terminal - the default one, with `foot` installed alongside | [Terra](https://terrapkg.com) |
@@ -39,7 +39,7 @@ recipes/
     00-base.yml              # graphics, audio, network, fonts, CLI plumbing
     05-terra.yml             # the Terra package repository
     10-niri.yml              # niri, greetd + noctalia-greeter, portals, XWayland
-    15-umbriel.yml           # Umbriel, the second compositor (built from source)
+    15-umbriel.yml           # Umbriel, the second compositor (from Terra)
     20-noctalia.yml          # Noctalia + its runtime dependencies
     30-apps.yml              # terminals, launcher, file manager, media
     40-devtools.yml          # mise + dev CLI tools
@@ -245,14 +245,11 @@ and `Umbriel`.
 and animations, from the same developers as Noctalia, built on wlroots and its
 own scene graph. Two things are worth knowing before you pick it:
 
-* It is **built from source** during the image build, because it is in neither
-  Fedora nor Terra, has no COPR, and upstream publishes no releases or tags.
-  `recipes/common/15-umbriel.yml` pins a commit (currently
-  `a607fdf72b2fcab3d5757e852e555c2eee74e7bc`, version 0.1.0) and builds it with
-  Meson. The toolchain it needs is installed, used and then removed inside that
-  one module, so it costs build time (about 40 seconds) and no image size. To
-  bump it, take the newest commit from
-  <https://api.github.com/repos/noctalia-dev/umbriel/commits/main>.
+* It comes from **Terra**, as `umbriel-nightly`: a nightly snapshot
+  (`0^20260918git.1a869f9` at the time of writing) rather than a release, because
+  upstream publishes no releases or tags. Nothing is pinned in this repository -
+  every rebuild takes whatever Terra published most recently - so expect it to
+  move under you, and expect the occasional broken night.
 * It has **its own configuration format** (live-reloaded TOML), so the niri
   keybindings in this README do not apply to it. The packaged default is
   `/usr/share/umbriel/config.toml` and yours goes in
@@ -260,12 +257,11 @@ own scene graph. Two things are worth knowing before you pick it:
   <https://docs.noctalia.dev/umbriel/>. X11 applications work, because
   `xwayland-satellite` is already installed and Umbriel finds it on `PATH`.
 
-**Screencast and screenshot sharing do not work under Umbriel yet.** They need
-`xdg-desktop-portal-umbriel`, a separate project which is also unpackaged and
-untagged, so it would be a second source build; it is deliberately left out. The
-rest of the desktop - the shell, the bar, notifications, the lock screen - is
-compositor-agnostic and works the same either way. Under niri, screencast still
-works as before through `xdg-desktop-portal-gnome`.
+Screen capture and screenshot sharing work under Umbriel as well: the package
+hard-requires `xdg-desktop-portal-umbriel-nightly`, which ships `umbriel.portal`
+and `umbriel-portals.conf`, and xdg-desktop-portal selects that config from the
+session's `DesktopNames=Umbriel`. Under niri the same job is done by
+`xdg-desktop-portal-gnome`, as before.
 
 ### Configuration
 
@@ -727,7 +723,7 @@ Nothing below requires touching more than one or two files.
 | Image names are `fedora-nothic` and `fedora-nothic-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
-| There are **two sessions**: niri (the default) and Umbriel | `15-umbriel.yml` builds Umbriel, `files/system/var/lib/noctalia-greeter/greeter.toml` sets the default, and both install a `/usr/share/wayland-sessions/*.desktop` | Change the `default` line in that file, or drop the umbriel module |
+| There are **two sessions**: niri (the default) and Umbriel | `15-umbriel.yml` installs Terra's `umbriel-nightly`, `files/system/var/lib/noctalia-greeter/greeter.toml` sets the default, and both install a `/usr/share/wayland-sessions/*.desktop` | Change the `default` line in that file, or drop the umbriel module |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image; the section above lists what to add for the things a GNOME or KDE desktop would have provided |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
@@ -766,6 +762,7 @@ systemctl cat greetd.service | grep -A1 '\[Install\]'
 noctalia-greeter sessions          # expect Niri and Umbriel
 grep -A1 '^\[session\]' /var/lib/noctalia-greeter/greeter.toml
 umbriel --version                  # the compositor runs, even without a session
+rpm -q umbriel-nightly xdg-desktop-portal-umbriel-nightly
 
 # Terra is registered, with this image's repo file in place rather than Terra's
 # own, and carries the two packages this image takes from it
