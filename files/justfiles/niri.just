@@ -73,6 +73,27 @@ niri-validate:
         niri validate -c "${XDG_CONFIG_HOME:-$HOME/.config}/niri/config.kdl"
     fi
 
+# Add your account to the libvirt group so virt-manager can manage VMs
+[group('Desktop')]
+libvirt-setup:
+    #!/usr/bin/env bash
+    # The image ships virt-manager and libvirt-daemon-kvm, and Fedora's preset
+    # already enables the libvirt sockets, so this membership is the only step
+    # left. It takes effect at your next login.
+    set -euo pipefail
+    if ! getent group libvirt >/dev/null; then
+        echo "There is no libvirt group, so libvirt is not installed here." >&2
+        echo "Install libvirt-daemon-kvm first." >&2
+        exit 1
+    fi
+    if id -nG "$USER" | tr ' ' '\n' | grep -qx libvirt; then
+        echo "$USER is already in the libvirt group."
+        exit 0
+    fi
+    echo "Adding $USER to the libvirt group; usermod needs root."
+    sudo usermod -aG libvirt "$USER"
+    echo "Done. Log out and back in for it to take effect; 'id -nG' shows your groups."
+
 # Change the login shell of the current user (defaults to fish)
 #
 # This image sets fish as the shell for accounts created later, but an account

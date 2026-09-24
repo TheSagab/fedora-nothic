@@ -12,15 +12,16 @@
 # heavier when the applications below were added. Resolved against an empty root
 # with `dnf5 --installroot=<dir> --releasever=44 --use-host-config --assumeno
 # install --setopt=install_weak_deps=False`, the modules before this one come to
-# 465 packages and ~1 GiB, and this one takes the total to 850 packages and
-# ~3 GiB.
+# 465 packages and ~1 GiB, and this one takes the total to 1013 packages and
+# ~3 GiB. libvirt-daemon-kvm alone accounts for 163 of those packages and 261 MiB,
+# which is the qemu stack behind virt-manager.
 #
 # Measured on this image instead, so that anything already present costs nothing,
 # the largest single additions are:
 #
 #   calibre            108 packages, 712 MiB   the ebook manager, the biggest item
 #   obs-studio          27 packages, 143 MiB   recording and streaming
-#   virt-manager        41 packages,  63 MiB   the GUI only, see its comment below
+#   virt-manager        41 packages,  63 MiB   the GUI; libvirt above is the rest
 #   zathura-pdf-mupdf    9 packages,  56 MiB
 #   transmission-gtk    10 packages,  21 MiB
 #
@@ -110,10 +111,15 @@ modules:
         - blueman
 
         # --- applications ------------------------------------------------
-        # virt-manager is only the GUI. To actually run a VM you also need
-        # libvirt-daemon-kvm (which pulls the qemu stack, +169 packages) and
-        # your account in the libvirt group. See the README.
+        # virt-manager plus the daemon it talks to. libvirt-daemon-kvm is the
+        # qemu/KVM driver and the qemu stack behind it; Fedora's own preset
+        # (90-default.preset) enables virtqemud.service and the virtqemud,
+        # virtproxyd, virtnetworkd and virtnodedevd sockets, so the image needs
+        # no systemctl line of its own. The one step that cannot be baked in is
+        # the group membership, because the account does not exist at build
+        # time: `ujust libvirt-setup` does it, see the README.
+        - virt-manager
+        - libvirt-daemon-kvm
         - transmission-gtk
         - calibre
         - obs-studio
-        - virt-manager

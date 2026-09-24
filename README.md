@@ -183,21 +183,23 @@ ujust niri-config-reset  # overwrite your copy with the image default
 ujust noctalia-config    # copy the default Noctalia config into your home
 ujust niri-validate      # check the niri config for errors
 ujust set-default-shell  # change your login shell (defaults to fish)
+ujust libvirt-setup      # join the libvirt group so virt-manager can manage VMs
 ```
 
 What else is on the image, beyond the desktop itself:
 
 * **Everyday**: ghostty and foot, Thunar with its gvfs integrations, imv, mpv,
   file-roller, mousepad, zathura, galculator, calibre, transmission-gtk,
-  obs-studio, virt-manager.
+  obs-studio, virt-manager with libvirt-daemon-kvm.
 * **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
   cliphist, grim and slurp, wl-clipboard, fuzzel.
 * **Development**: mise, chezmoi, git, neovim, ripgrep, fd-find, bat, tree, yq,
   just, podman, buildah.
 
 Two of those need a step before they do anything: `gammastep` is a daemon you
-start yourself, and `virt-manager` needs `libvirt-daemon-kvm` plus your account
-in the `libvirt` group. Both are covered under "Things worth knowing" below.
+start yourself, and `virt-manager` needs your account in the `libvirt` group
+(`ujust libvirt-setup` does it). Both are covered under "Things worth knowing"
+below.
 
 ### Login screen
 
@@ -337,7 +339,7 @@ throughout, as in the recipes.
 | Transmission | transmission-gtk |
 | Foliate, Okular (ebooks) | calibre |
 | GNOME's screen recorder | obs-studio |
-| GNOME Boxes | virt-manager (see the note below about the daemon) |
+| GNOME Boxes | virt-manager with libvirt-daemon-kvm (run `ujust libvirt-setup` once) |
 
 ### Worth adding, to finish the desktop
 
@@ -376,10 +378,13 @@ the ffmpeg stack, and `mousepad` because Thunar already brings GTK and XFCE.
 
 **Three of the installed applications need a step that a package cannot do.**
 
-* `virt-manager` is the GUI only. To run a VM you also need
-  `sudo dnf install libvirt-daemon-kvm` (+169 packages, the qemu stack) and your
-  account in the `libvirt` group (`sudo usermod -aG libvirt $USER`, then log out),
-  otherwise virt-manager opens with no connection to offer.
+* `virt-manager` and its daemon are both installed, and Fedora's own preset
+  (`90-default.preset`) enables `virtqemud.service` with the virtqemud, virtproxyd,
+  virtnetworkd and virtnodedevd sockets, so the image needs no `systemctl` line
+  for libvirt. The one step that cannot be baked in is the group membership,
+  because the account does not exist at build time: run `ujust libvirt-setup`,
+  which adds you to the `libvirt` group, and log out and back in. Until then
+  virt-manager opens with no connection to offer.
 * `gammastep` is a daemon, so installing it changes nothing by itself. Run
   `gammastep -O 4000` for a fixed colour temperature, or `gammastep -c` with a
   location (it can use geoclue) to follow the sun. Nothing starts it for you on
@@ -779,7 +784,7 @@ Notes that came out of that verification and are easy to trip over:
   `/usr/share/ublue-os/just/60-custom.just` when `/usr/bin/ujust` exists (it does
   on the Universal Blue base, from `ublue-os-just`); otherwise it falls back to
   installing `blujust`.
-* Resolving the full package set with `dnf5` against an empty root gives 950
+* Resolving the full package set with `dnf5` against an empty root gives 1106
   packages and ~3 GiB, with **no** `gnome-shell`, `mutter`, `gdm`,
   `gnome-session`, `nautilus`, `plasma*`, `kwin`, `sddm` or `kf5`/`kf6`. The
   only `gnome-*` packages are libraries and a keyring, not a desktop:
