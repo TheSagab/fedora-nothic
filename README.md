@@ -78,7 +78,24 @@ are derived from `github.repository_owner`, so no username has to be hard-coded
 anywhere - except in the cosmetic `os-release` fields in
 `recipes/common/60-system.yml` if you want to change them.
 
-Then open the repository's **Actions** tab once and enable workflows.
+The repository name and the image name are independent: nothing in the build
+reads the repository name, so `sagab-custom-fedora` is a fine repository name for
+images called `fedora-nothic`. Rename either if you like, but only the image name
+appears in the recipes, the disk workflow and the `ghcr.io` paths in "Installing".
+
+Then two repository settings, both of which fail the first build if left alone:
+
+* **Actions → General → Workflow permissions**: set it to **Read and write**.
+  The `permissions:` block in `build.yml` asks for `packages: write`, but a
+  workflow can only narrow the token, not widen it, so with the read-only default
+  the push to `ghcr.io` stops with `permission_denied`.
+* **Package visibility**: GitHub creates the container package **private**, even
+  from a public repository. Open the package's settings (your profile → Packages
+  → `fedora-nothic` → Package settings) and make it public if you want to rebase
+  a machine without logging in to `ghcr.io`; a private package still works, but
+  `rpm-ostree rebase` and `bootc switch` then need credentials.
+
+Finally, open the repository's **Actions** tab once and enable workflows.
 
 ### 2. Generate a signing key (required)
 
