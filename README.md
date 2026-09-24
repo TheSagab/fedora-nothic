@@ -331,7 +331,7 @@ against. `install_weak_deps=False` throughout, as in the recipes.
 | Bluetooth (Bluedevil) | `blueman` | 12, 23 MiB |
 | Colour picker | `gpick`, or `gcolor3` | 1, 1 MiB |
 | Printing (GNOME Settings) | `cups` + `system-config-printer` | 36, 80 MiB |
-| Scanning (Document Scanner, Skanlite) | `xsane`; `simple-scan` is smaller | 4, 18 MiB |
+| Scanning (Document Scanner, Skanlite) | `xsane`; `simple-scan` is lighter on disk (7 packages, 4 MiB) | 4, 18 MiB |
 | Webcam (Cheese, Kamoso) | `guvcview` | 5, 5 MiB |
 | Firmware updates (gnome-firmware, Discover) | `fwupd` | 2, 11 MiB |
 | Remote desktop (GNOME Remote Desktop) | `wayvnc` | 3, under 1 MiB |
