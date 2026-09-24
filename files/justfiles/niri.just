@@ -20,7 +20,7 @@ niri-info:
     if command -v nvidia-smi >/dev/null 2>&1; then
         nvidia-smi --query-gpu=name,driver_version --format=csv
     else
-        echo "No NVIDIA driver on this image (that is the plain sagab-niri variant)."
+        echo "No NVIDIA driver on this image (that is the plain fedora-nothic variant)."
     fi
     echo
     echo "Session units:"

@@ -37,8 +37,8 @@ jobs:
       matrix:
         # !! Keep in sync with the `name:` fields of the recipes
         image:
-          - sagab-niri
-          - sagab-niri-nvidia
+          - fedora-nothic
+          - fedora-nothic-nvidia
         disk-type:
           - qcow2
           - anaconda-iso

@@ -27,9 +27,9 @@ modules:
   # VERSION_ID: they are used by dnf/COPR and by tools that detect Fedora.
   - type: os-release
     properties:
-      NAME: Sagab Niri
-      PRETTY_NAME: Sagab Niri 44 (niri + Noctalia)
+      NAME: Fedora Nothic
+      PRETTY_NAME: Fedora Nothic 44 (niri + Noctalia)
       VARIANT: Niri + Noctalia
       VARIANT_ID: niri-noctalia
-      DEFAULT_HOSTNAME: sagab-niri
+      DEFAULT_HOSTNAME: fedora-nothic
       ID_LIKE: fedora

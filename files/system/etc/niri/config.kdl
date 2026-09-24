@@ -1,4 +1,4 @@
-// niri configuration shipped by the sagab-niri image.
+// niri configuration shipped by the fedora-nothic image.
 //
 // This file is the *system default*: niri loads
 //   $XDG_CONFIG_HOME/niri/config.kdl  (i.e. ~/.config/niri/config.kdl)

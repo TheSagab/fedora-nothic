@@ -1,4 +1,4 @@
-# sagab-custom-fedora
+# fedora-nothic
 
 A personal [Fedora Atomic](https://fedoraproject.org/atomic-desktops/) image, built with
 [BlueBuild](https://blue-build.org/) on top of Universal Blue's desktop-less base image.
@@ -22,8 +22,8 @@ Two images are built from this repository:
 
 | Image | Description |
 | --- | --- |
-| `ghcr.io/<you>/sagab-niri` | no GPU driver beyond the in-tree ones |
-| `ghcr.io/<you>/sagab-niri-nvidia` | adds the NVIDIA kernel modules + userspace driver from [ublue-os/akmods](https://github.com/ublue-os/akmods), using the **proprietary** modules |
+| `ghcr.io/<you>/fedora-nothic` | no GPU driver beyond the in-tree ones |
+| `ghcr.io/<you>/fedora-nothic-nvidia` | adds the NVIDIA kernel modules + userspace driver from [ublue-os/akmods](https://github.com/ublue-os/akmods), using the **proprietary** modules |
 
 ---
 
@@ -104,7 +104,7 @@ in `recipes/common/90-final.yml` and use `ostree-unverified-registry:` when
 rebasing. Without `cosign.pub` the build stops at the last module with:
 
 ```
-ERROR: Cannot find 'sagab-niri.pub' image key in '/etc/pki/containers/'
+ERROR: Cannot find 'fedora-nothic.pub' image key in '/etc/pki/containers/'
        BlueBuild CLI should have copied it, but it didn't
 ```
 
@@ -114,8 +114,8 @@ Push, or run the `bluebuild` workflow manually. When it is green, both images
 exist at:
 
 ```
-ghcr.io/<you>/sagab-niri:latest
-ghcr.io/<you>/sagab-niri-nvidia:latest
+ghcr.io/<you>/fedora-nothic:latest
+ghcr.io/<you>/fedora-nothic-nvidia:latest
 ```
 
 The images are rebuilt daily at 06:00 UTC so they track Fedora, Universal Blue
@@ -131,22 +131,22 @@ Works from Fedora Atomic, Silverblue, Bazzite, Bluefin, or another BlueBuild ima
 
 ```bash
 # 1. rebase to the unsigned image first, to pick up the signing policy
-sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/<you>/sagab-niri:latest
+sudo rpm-ostree rebase ostree-unverified-registry:ghcr.io/<you>/fedora-nothic:latest
 sudo systemctl reboot
 
 # 2. then rebase to the signed image
-sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/<you>/sagab-niri:latest
+sudo rpm-ostree rebase ostree-image-signed:docker://ghcr.io/<you>/fedora-nothic:latest
 sudo systemctl reboot
 ```
 
-On a `bootc` based system (Fedora 42+) `sudo bootc switch ghcr.io/<you>/sagab-niri:latest`
+On a `bootc` based system (Fedora 42+) `sudo bootc switch ghcr.io/<you>/fedora-nothic:latest`
 works too - but note that `bootc switch` is what applies kernel arguments, which
 matters for the NVIDIA variant.
 
 ### Option B: installer ISO
 
 Run the **Build disk images** workflow (`workflow_dispatch`), pick `amd64`, and
-download the `sagab-niri-anaconda-iso` artifact. Flash it with
+download the `fedora-nothic-anaconda-iso` artifact. Flash it with
 [Fedora Media Writer](https://fedoraproject.org/workstation/download/) or
 `dd`. The same workflow can produce a `qcow2` for VMs.
 
@@ -675,7 +675,7 @@ Nothing below requires touching more than one or two files.
 | Assumption | Where it lives | How to change it |
 | --- | --- | --- |
 | Base is Universal Blue's desktop-less image, pinned to Fedora 44 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
-| Image names are `sagab-niri` and `sagab-niri-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
+| Image names are `fedora-nothic` and `fedora-nothic-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |

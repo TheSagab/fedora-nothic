@@ -8,7 +8,7 @@
 # The build matrix in .github/workflows/build.yml builds both.
 
 # published as ghcr.io/<your-github-user>/<name>
-name: sagab-niri
+name: fedora-nothic
 description: Fedora Atomic (Universal Blue base) with niri, the Noctalia shell and mise.
 
 # Universal Blue's desktop-less base. Fedora 44, includes codecs, hardware

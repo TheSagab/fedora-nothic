@@ -1,4 +1,4 @@
-# greetd configuration for the sagab-niri image.
+# greetd configuration for the fedora-nothic image.
 #
 # greetd owns tty1 and runs the greeter, which in turn starts the session.
 # Fedora's greetd package creates the `greetd` user via sysusers, so the `user`

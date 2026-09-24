@@ -9,7 +9,7 @@
 # Keep this file and recipes/recipe.yml in sync when editing modules.
 
 # published as ghcr.io/<your-github-user>/<name>
-name: sagab-niri-nvidia
+name: fedora-nothic-nvidia
 description: Fedora Atomic (Universal Blue base) with niri, the Noctalia shell, mise and the NVIDIA driver.
 
 base-image: ghcr.io/ublue-os/base-main
