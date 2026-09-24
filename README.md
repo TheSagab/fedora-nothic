@@ -394,12 +394,29 @@ packages) and listing what matches, and what each one is there for.
 | `gtk4`, `libadwaita` | ghostty, file-roller and `xdg-desktop-portal-gnome` | Only by dropping all three |
 | `gtk4-layer-shell` | ghostty alone | Yes - drop ghostty and keep foot |
 | `gnome-desktop3`, `gnome-desktop4` | `xdg-desktop-portal-gnome` | Only by giving up screencast and screen sharing, which niri's own `niri-portals.conf` asks for |
-| `gnome-keyring`, `gcr3`, `gcr-libs` | the Secret portal, again per `niri-portals.conf` | No - the only other provider is KWallet |
-| `file-roller` | the archive manager in `30-apps.yml`, and what `thunar-archive-plugin` integrates with | Yes - `xarchiver` (GTK), `engrampa` (MATE) or `ark` (KDE) |
+| `gnome-keyring`, `gcr3`, `gcr-libs` | `niri-portals.conf` names it for `org.freedesktop.impl.portal.Secret`, and it is the only package in Fedora 44 that ships a portal file declaring that interface | No |
+| `file-roller` | the archive manager in `30-apps.yml`, and what `thunar-archive-plugin` integrates with | Yes, but only to one the plugin has a backend for - it ships `ark.tap`, `engrampa.tap` and file-roller's. `engrampa` is +9 packages here, `ark` +78; `xarchiver` is smaller but the plugin has no backend for it |
 | `adwaita-cursor-theme` | chosen in `00-base.yml` | It is a choice, not a requirement; a non-GNOME cursor theme can replace it |
-| `adwaita-icon-theme` | comes in with the GTK stack | Only with `libadwaita` |
+| `adwaita-icon-theme` | required by `gtk3` and `gtk4` | Only with the GTK stack |
 | Qt: `qt5-qtbase`, `qt6-qtbase`, `qtdeclarative`, `qtsvg`, `qtwayland` | Noctalia and Quickshell | Not GNOME or KDE, and required for the shell |
 | KDE, Plasma, KF5, KF6 | nothing | Already absent |
+
+Two of those "no" answers are worth showing, because they are what niri itself
+asks for. `niri-portals.conf` is four lines:
+
+```
+[preferred]
+default=gnome;gtk;
+org.freedesktop.impl.portal.Access=gtk;
+org.freedesktop.impl.portal.Notification=gtk;
+org.freedesktop.impl.portal.Secret=gnome-keyring;
+```
+
+and no other packaged backend fills that last role: `xdg-desktop-portal-kde`
+ships `kde.portal`, whose `Interfaces=` list does not include
+`org.freedesktop.impl.portal.Secret`, and `kwalletd6` ships no portal file at
+all. So `gnome-keyring` is not a leftover from a GNOME habit; it is what niri
+names.
 
 So there is no KDE at all, and the GNOME content is two libraries, a keyring, a
 cursor theme and one application. `file-roller` is the only piece that is a GNOME
