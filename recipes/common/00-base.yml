@@ -61,6 +61,13 @@ modules:
         - bash-completion
         - zsh
         - fish
+        # Fedora splits util-linux in two. The base image has util-linux-core,
+        # which carries the essentials (mount, lsblk, agetty, login) but not
+        # chsh or chfn - those are in the full util-linux package. Anything that
+        # changes a login shell reaches for chsh, including the usual
+        # instructions and this image's `ujust set-default-shell`, and it failed
+        # with "chsh: command not found" without this.
+        - util-linux
         - polkit
         - flatpak
         - rsync

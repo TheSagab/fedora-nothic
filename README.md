@@ -538,6 +538,12 @@ login shell lives in `/etc/passwd` on the installed system, not in the image:
 * For an account that already existed, run `ujust set-default-shell` to change its
   login shell (`ujust set-default-shell /bin/bash` to change it back).
 
+The recipe uses `chsh`, which Fedora does not put in the base image: it ships
+`util-linux-core`, and `chsh` and `chfn` are in the full `util-linux` package,
+which this image installs on top. If you see `chsh: command not found` on an
+older build, either run `sudo usermod --shell /usr/bin/fish "$USER"` yourself or
+update the image.
+
 bash and zsh are still installed. **mise** is activated in all three via
 `/etc/profile.d/mise.sh` and `/etc/fish/conf.d/mise.fish`. Tools are installed
 per user under `~/.local/share/mise`:
@@ -842,6 +848,12 @@ for it.
 
 ## Troubleshooting
 
+* **`ujust set-default-shell` fails with `chsh: command not found`**: Fedora's
+  base image ships `util-linux-core`, and `chsh`/`chfn` live in the full
+  `util-linux` package, which this image installs. On a build made before that
+  was added, the recipe falls back to `usermod` through `sudo`; if your image
+  predates the fallback too, run `sudo usermod --shell /usr/bin/fish "$USER"` and
+  log out. Verify with `getent passwd "$USER"`.
 * **No sound**: `systemctl --user status pipewire wireplumber`. The units are
   enabled by the packages' systemd presets; if they are missing, run
   `systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service`.

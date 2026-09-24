@@ -133,7 +133,13 @@ libvirt-setup:
 [group('Desktop')]
 set-default-shell shell="/usr/bin/fish":
     #!/usr/bin/env bash
+    # chsh and chfn live in the full util-linux package. Fedora's base image has
+    # only util-linux-core, which does not include them, so the image installs
+    # util-linux on top; the usermod fallback is here so this recipe also works
+    # on an image built before that.
     set -euo pipefail
+    # `sudo ujust ...` would otherwise report and change root's shell.
+    target_user="${SUDO_USER:-${USER:-$(id -un)}}"
     target="{{ shell }}"
     if [ ! -x "$target" ]; then
         echo "$target is not an executable." >&2
@@ -144,11 +150,20 @@ set-default-shell shell="/usr/bin/fish":
         echo "Available: $(grep -v '^#' /etc/shells | tr '\n' ' ')" >&2
         exit 1
     fi
-    current="$(getent passwd "$USER" | cut -d: -f7)"
+    current="$(getent passwd "$target_user" | cut -d: -f7)"
     if [ "$current" = "$target" ]; then
-        echo "Your login shell is already $target."
+        echo "The login shell of $target_user is already $target."
         exit 0
     fi
-    chsh -s "$target" "$USER"
-    echo "Login shell changed from $current to $target."
+    if command -v chsh >/dev/null 2>&1; then
+        chsh -s "$target" "$target_user"
+    elif command -v sudo >/dev/null 2>&1; then
+        echo "chsh is not installed, falling back to usermod, which needs sudo."
+        sudo usermod --shell "$target" "$target_user"
+    else
+        echo "Neither chsh nor sudo is available here." >&2
+        echo "Install util-linux, or run: usermod --shell $target $target_user" >&2
+        exit 1
+    fi
+    echo "Login shell of $target_user changed from $current to $target."
     echo "It takes effect the next time you log in."
