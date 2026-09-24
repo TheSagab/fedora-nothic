@@ -18,3 +18,4 @@ modules:
   - type: justfiles
     include:
       - niri.just
+      - umbriel.just

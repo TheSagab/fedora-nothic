@@ -1,0 +1,88 @@
+# fedora-nothic's starting configuration for Umbriel.
+#
+# Umbriel ships a documented example as /usr/share/umbriel/config.toml and
+# falls back to it, but that example deliberately starts nothing and binds
+# Mod+Return to kitty, which this image does not install. Logging into Umbriel
+# for the first time therefore gives you an empty screen with no bar and a
+# terminal key that does nothing.
+#
+# Umbriel looks for its configuration in this order:
+#
+#   1. $XDG_CONFIG_HOME/umbriel/config.toml
+#   2. $XDG_CONFIG_DIRS/umbriel/config.toml   <- this file, via /etc/xdg
+#   3. /usr/share/umbriel/config.toml         <- the packaged example
+#
+# So this file applies to every user, and a personal
+# ~/.config/umbriel/config.toml still overrides it completely. `ujust
+# umbriel-config` copies this file into your home so you can edit it.
+#
+# The packaged example is included first, so everything documented there is
+# still in effect: blur and shadows, animations, the window rules that float
+# Noctalia's settings and the share picker, and the layer rules that blur
+# Noctalia's bar, panels and OSD. Only the settings below override it.
+#
+# Check it without disturbing a running session:
+#
+#   umbriel validate -c /etc/xdg/umbriel/config.toml
+
+[include]
+files = ["/usr/share/umbriel/config.toml"]
+
+[include.optional]
+# Noctalia writes its palette here when you apply the Umbriel template from
+# Noctalia's settings. The file is watched, so applying it themes Umbriel live
+# instead of needing a restart.
+files = ["~/.config/umbriel/noctalia.toml"]
+
+[general]
+# The bar, the launcher, the control centre, notifications and the wallpaper
+# all come from Noctalia, so it has to be running. Without this, the binds
+# below that call `noctalia msg` have nothing to talk to.
+autostart = ["noctalia", "xdg-user-dirs-update"]
+show_cheatsheet = true
+
+[keybinds]
+# --- applications ---------------------------------------------------------
+# Upstream binds Mod+Return to kitty. This image ships ghostty, and foot as a
+# fallback, so the terminal key actually opens a terminal.
+"Mod+Return" = { action = "spawn:ghostty", repeat = false }
+"Mod+Shift+Return" = "spawn:foot"
+"Mod+E" = "spawn:thunar"
+
+# --- Noctalia panels ------------------------------------------------------
+# These are the panel ids Noctalia documents for Umbriel. Umbriel's own
+# defaults already bind the bare Super key to the launcher; Mod+D is added
+# because that is the key this image uses under niri.
+"Mod+D" = { action = "spawn:noctalia msg panel-toggle launcher", repeat = false }
+"Mod+S" = { action = "spawn:noctalia msg panel-toggle control-center", repeat = false }
+"Mod+Shift+S" = { action = "spawn:noctalia msg settings-toggle", repeat = false }
+"Mod+Ctrl+V" = { action = "spawn:noctalia msg panel-toggle clipboard", repeat = false }
+"Mod+W" = { action = "spawn:noctalia msg panel-toggle wallpaper", repeat = false }
+"Alt+Tab" = { action = "spawn:noctalia msg window-switcher", repeat = false }
+"Super+Alt+L" = { action = "spawn:noctalia msg session lock", repeat = false }
+
+# --- screenshots ----------------------------------------------------------
+# The same keys as the niri session. Print is the interactive region picker,
+# Ctrl+Print the whole monitor, Alt+Print freezes the screen so you can draw
+# on it. Noctalia writes them to its own screenshot directory, which is set in
+# Noctalia's settings rather than here.
+"Print" = { action = "spawn:noctalia msg screenshot-region", repeat = false }
+"Ctrl+Print" = { action = "spawn:noctalia msg screenshot-fullscreen", repeat = false }
+"Alt+Print" = { action = "spawn:noctalia msg screenshot-annotate", repeat = false }
+
+# --- media and brightness -------------------------------------------------
+# The same actions as the niri session, so the hardware keys behave the same
+# way in both. These are deliberately repeating binds: hold the key and the
+# volume keeps stepping. allow_when_locked is for the keys that should still
+# work at the lock screen.
+"XF86AudioRaiseVolume" = { action = "spawn:noctalia msg volume-up", allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn:noctalia msg volume-down", allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn:noctalia msg volume-mute", allow_when_locked = true }
+"XF86AudioMicMute" = { action = "spawn:wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle", allow_when_locked = true }
+"XF86MonBrightnessUp" = { action = "spawn:noctalia msg brightness-up", allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn:noctalia msg brightness-down", allow_when_locked = true }
+"XF86AudioPlay" = { action = "spawn:playerctl play-pause", allow_when_locked = true }
+"XF86AudioPause" = { action = "spawn:playerctl play-pause", allow_when_locked = true }
+"XF86AudioStop" = { action = "spawn:playerctl stop", allow_when_locked = true }
+"XF86AudioPrev" = { action = "spawn:playerctl previous", allow_when_locked = true }
+"XF86AudioNext" = { action = "spawn:playerctl next", allow_when_locked = true }

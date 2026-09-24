@@ -22,6 +22,18 @@
 # from the session's DesktopNames=Umbriel. Umbriel's other requirement,
 # xwayland-satellite, is already installed by 10-niri.yml.
 #
+# Umbriel's own default configuration starts nothing and binds the terminal to
+# kitty, which this image does not install, so a first login lands on an empty
+# screen with no bar and no working terminal key. The starting point this image
+# ships is files/system/etc/xdg/umbriel/config.toml. Umbriel looks for its
+# config in $XDG_CONFIG_HOME/umbriel/config.toml, then each
+# $XDG_CONFIG_DIRS/umbriel/config.toml (/etc/xdg by default), then the packaged
+# /usr/share/umbriel/config.toml, so /etc/xdg is the right place for an
+# image-wide default that a user's own file still overrides. That config
+# includes the packaged example and then autostarts Noctalia and rebinds the
+# terminal, launcher, screenshot and media keys. ujust umbriel-config copies it
+# into your home to edit.
+#
 # There is nothing to pin or bump here: it is a nightly, so each image rebuild
 # takes whatever Terra published most recently.
 

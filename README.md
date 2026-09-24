@@ -51,6 +51,7 @@ recipes/
 files/
   system/                    # copied verbatim onto / of the image
     etc/niri/config.kdl      # the niri configuration (system default)
+    etc/xdg/umbriel/config.toml  # the Umbriel configuration (system default)
     etc/greetd/config.toml   # login manager configuration
     var/lib/noctalia-greeter/greeter.toml  # keeps niri the default session
     etc/default/useradd      # SHELL=/usr/bin/fish for accounts created later
@@ -58,6 +59,7 @@ files/
     usr/lib/tmpfiles.d/      # the greeter's state directory
     usr/lib/sysctl.d/        # inotify limits for dev tooling
   justfiles/niri.just        # ujust recipes (ujust niri-info, niri-config, ...)
+  justfiles/umbriel.just     # ujust recipes (ujust umbriel-config, ...)
 disk_config/                 # bootc-image-builder configs for qcow2/ISO output
 .github/workflows/
   build.yml                  # builds both images, daily + on push
@@ -405,9 +407,7 @@ own scene graph. Two things are worth knowing before you pick it:
   every rebuild takes whatever Terra published most recently - so expect it to
   move under you, and expect the occasional broken night.
 * It has **its own configuration format** (live-reloaded TOML), so the niri
-  keybindings in this README do not apply to it. The packaged default is
-  `/usr/share/umbriel/config.toml` and yours goes in
-  `~/.config/umbriel/config.toml`; the documentation is at
+  keybindings in this README do not apply to it. The documentation is at
   <https://docs.noctalia.dev/umbriel/>. X11 applications work, because
   `xwayland-satellite` is already installed and Umbriel finds it on `PATH`.
 
@@ -417,13 +417,52 @@ and `umbriel-portals.conf`, and xdg-desktop-portal selects that config from the
 session's `DesktopNames=Umbriel`. Under niri the same job is done by
 `xdg-desktop-portal-gnome`, as before.
 
+#### Starting Umbriel without configuring it from scratch
+
+The packaged example deliberately starts nothing, and it binds `Mod+Return` to
+kitty, which this image does not install. A first login to Umbriel therefore
+gives you an empty screen: no bar, no wallpaper, and a terminal key that does
+nothing. The compositor is fine, it just has no configuration.
+
+This image ships one at `/etc/xdg/umbriel/config.toml`, which Umbriel finds
+through `XDG_CONFIG_DIRS`. It includes the packaged example and then overrides
+what matters, so upstream's blur, shadows, animations, window rules and Noctalia
+layer rules all still apply and only this is layered on top:
+
+* `autostart = ["noctalia", "xdg-user-dirs-update"]`, which is what puts a bar,
+  a launcher, a control centre, notifications and a wallpaper on the screen.
+* `Mod+Return` opens ghostty rather than kitty, `Mod+Shift+Return` foot, and
+  `Mod+E` Thunar.
+* `Mod+D` launcher (the bare Super key does this too, as upstream intends),
+  `Mod+S` control centre, `Mod+Shift+S` settings, `Mod+Ctrl+V` clipboard,
+  `Mod+W` wallpaper, `Alt+Tab` window switcher, `Super+Alt+L` lock.
+* `Print`, `Ctrl+Print` and `Alt+Print` for region, monitor and annotate
+  screenshots, and the same `XF86` media and brightness keys as niri.
+
+The lookup order is `~/.config/umbriel/config.toml`, then
+`/etc/xdg/umbriel/config.toml` (this image), then
+`/usr/share/umbriel/config.toml` (the packaged example). A personal file wins
+completely rather than merging with the others, so `ujust umbriel-config`
+copies the image default into your home to edit, `ujust umbriel-config-reset`
+puts it back, and `ujust umbriel-validate` checks both with `umbriel validate`.
+
+Three differences from niri are worth knowing. `Mod` is Super in a real DRM
+session but **Alt when Umbriel runs nested** inside another compositor. `Mod+T`
+toggles floating instead of opening a terminal, because that is upstream's
+binding. And Noctalia's theming integration is applied from Noctalia's settings
+window with the "Umbriel" template, which writes
+`~/.config/umbriel/noctalia.toml`; that path is already in `[include.optional]`,
+so applying the template themes Umbriel live.
+
 ### Configuration
 
 **niri** reads `~/.config/niri/config.kdl` and falls back to `/etc/niri/config.kdl`
-(the file shipped by this image). Umbriel is configured separately, in TOML; see
-"Choosing a compositor" above. `/etc` is writable and survives updates, so you
-can edit it in place - but `ujust niri-config` gives you a copy in your home
-directory that is easier to keep in dotfiles.
+(the file shipped by this image). Umbriel is configured separately, in TOML:
+`~/.config/umbriel/config.toml`, then `/etc/xdg/umbriel/config.toml` (the file
+shipped by this image), then the packaged example. See "Choosing a compositor"
+above. `/etc` is writable and survives updates, so you can edit it in place -
+but `ujust niri-config` gives you a copy in your home directory that is easier
+to keep in dotfiles.
 
 **Noctalia** only reads `~/.config/noctalia/*.toml` plus GUI-managed overrides in
 `~/.local/state/noctalia/settings.toml`. New users get a small starting config
@@ -848,7 +887,8 @@ for it.
   at the top of the repo file record all of the measurements above.
 * **`ujust` has no `Desktop` group**: the justfiles module appends its imports
   to `/usr/share/ublue-os/just/60-custom.just`; check that the file contains the
-  import line for `/usr/share/bluebuild/justfiles/niri.just`.
+  import lines for `/usr/share/bluebuild/justfiles/niri.just` and
+  `/usr/share/bluebuild/justfiles/umbriel.just`.
 * **Build fails with "Could not depsolve transaction" in the akmods module**:
   the `kmod-nvidia` RPM requires `kernel-uname-r = <version>`, so it only installs
   when the base image's kernel matches the one the akmods image was built for.
@@ -878,6 +918,7 @@ Nothing below requires touching more than one or two files.
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
 | There are **two sessions**: niri (the default) and Umbriel | `15-umbriel.yml` installs Terra's `umbriel-nightly`, `files/system/var/lib/noctalia-greeter/greeter.toml` sets the default, and both install a `/usr/share/wayland-sessions/*.desktop` | Change the `default` line in that file, or drop the umbriel module |
+| Umbriel has a **working default configuration** at `/etc/xdg/umbriel/config.toml` (it autostarts Noctalia and rebinds the terminal to ghostty) | `files/system/etc/xdg/umbriel/config.toml`, found through `XDG_CONFIG_DIRS`, including the packaged `/usr/share/umbriel/config.toml` | Delete that file to fall back to the packaged example, which starts nothing and expects kitty |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image; the section above lists what to add for the things a GNOME or KDE desktop would have provided |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
