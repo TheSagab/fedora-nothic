@@ -222,7 +222,20 @@ survive the rebase and can get in the way:
   so they can stay or go.
 
 What survives: everything in `/home` and `/var`, including your Flatpaks, their
-settings and any containers. What changes: `/usr` becomes this image's tree, so the
+settings and any containers. That includes **Homebrew**, if you use it: on Linux it
+installs to `/home/linuxbrew/.linuxbrew` and puts its PATH line in `~/.bashrc`,
+both of which the rebase leaves alone, and its bottles keep working because the
+Fedora release does not change. What is worth knowing is that `brew shellenv`
+*prepends* that bin directory, and `~/.bashrc` is read after `/etc/profile`, so
+brew's copies of tools this image provides natively shadow them. `type -a mise`
+shows which one you are actually running. The clean fix is to uninstall the
+duplicates - `brew uninstall mise ripgrep fd bat eza fzf gh lazygit neovim
+starship atuin helix yazi k9s gping duf tldr fastfetch git-delta difftastic` -
+after which the native ones are used. mise's own data is in `~/.local/share/mise`
+and `~/.config/mise`, so it is unaffected either way and the native mise picks up
+the same tool versions immediately.
+
+What changes: `/usr` becomes this image's tree, so the
 KDE packages are gone, the session is niri or Umbriel instead of Plasma, and the
 login screen is noctalia-greeter instead of SDDM. Your old Plasma configuration
 stays in `~/.config` doing nothing.
