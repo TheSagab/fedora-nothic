@@ -383,6 +383,29 @@ for anything else that asks polkit.
 few KiB each, not the KDE desktop - `virt-manager` itself is GTK, and its
 transaction contains no `plasma`, `kwin` or KF6 libraries.
 
+### What GNOME is actually in this image
+
+The other half of the question. This is every GNOME or KDE component the image
+resolves to, found by resolving the whole package set on an empty root (763
+packages) and listing what matches, and what each one is there for.
+
+| Component | What needs it | Can it go? |
+| --- | --- | --- |
+| `gtk4`, `libadwaita` | ghostty, file-roller and `xdg-desktop-portal-gnome` | Only by dropping all three |
+| `gtk4-layer-shell` | ghostty alone | Yes - drop ghostty and keep foot |
+| `gnome-desktop3`, `gnome-desktop4` | `xdg-desktop-portal-gnome` | Only by giving up screencast and screen sharing, which niri's own `niri-portals.conf` asks for |
+| `gnome-keyring`, `gcr3`, `gcr-libs` | the Secret portal, again per `niri-portals.conf` | No - the only other provider is KWallet |
+| `file-roller` | the archive manager in `30-apps.yml`, and what `thunar-archive-plugin` integrates with | Yes - `xarchiver` (GTK), `engrampa` (MATE) or `ark` (KDE) |
+| `adwaita-cursor-theme` | chosen in `00-base.yml` | It is a choice, not a requirement; a non-GNOME cursor theme can replace it |
+| `adwaita-icon-theme` | comes in with the GTK stack | Only with `libadwaita` |
+| Qt: `qt5-qtbase`, `qt6-qtbase`, `qtdeclarative`, `qtsvg`, `qtwayland` | Noctalia and Quickshell | Not GNOME or KDE, and required for the shell |
+| KDE, Plasma, KF5, KF6 | nothing | Already absent |
+
+So there is no KDE at all, and the GNOME content is two libraries, a keyring, a
+cursor theme and one application. `file-roller` is the only piece that is a GNOME
+*application* rather than a dependency of something else, and the only one that
+is genuinely easy to replace.
+
 ## Customising
 
 The recipes are deliberately small and commented - edit them directly.
@@ -704,11 +727,13 @@ Notes that came out of that verification and are easy to trip over:
   only `gnome-*` packages are libraries and a keyring, not a desktop:
   `gnome-desktop3`/`gnome-desktop4` come from `xdg-desktop-portal-gnome` (which
   niri requires for screencast) and `gnome-keyring` is the Secret portal backend
-  niri's own `niri-portals.conf` asks for. Note that ghostty does pull GNOME
-  *libraries* that niri and Noctalia alone do not need - `gtk4`,
-  `gtk4-layer-shell`, `libadwaita` - because it hard-requires gtk4. There is
-  still no GNOME desktop. The command that produced these numbers is under
-  "Re-checking this configuration yourself".
+  niri's own `niri-portals.conf` asks for. Note that the image does carry GNOME
+  *libraries* that niri and Noctalia alone do not need - `gtk4` and
+  `libadwaita` (ghostty hard-requires gtk4, and file-roller and
+  xdg-desktop-portal-gnome need both), `gtk4-layer-shell` (ghostty only), and
+  `gnome-desktop3`/`gnome-desktop4` (xdg-desktop-portal-gnome). There is still
+  no GNOME desktop, and no KDE at all; the section above lists exactly what is
+  there and what could be removed.
 * For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-44` and
   `ghcr.io/ublue-os/base-main:44` both report
   `ostree.linux = 7.2.6-200.fc44.x86_64`, i.e. the kmod RPMs are built for the
