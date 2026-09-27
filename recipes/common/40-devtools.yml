@@ -39,11 +39,10 @@ modules:
         - ripgrep
         - fd-find
         - bat
-        - tree
         - yq
-        # `just` is not repeated here: the base image installs it, and
-        # ublue-os-just, which is what provides `ujust`, requires it, so it is
-        # on the image either way.
+        # `tree` and `just` are not repeated here: the base image installs both,
+        # and ublue-os-just, which is what provides `ujust`, requires just, so
+        # they are on the image either way.
         #
         # Dotfile manager. Fedora carries it, so no COPR or tarball needed:
         # `chezmoi init <repo>` on a new machine is the whole workflow.
@@ -95,7 +94,7 @@ modules:
         - zed
         - zed-cli
 
-        # Container/OS tooling. distrobox and toolbox already come from the
-        # Universal Blue base image; skopeo comes from 00-base.yml.
-        - podman
-        - buildah
+        # Container/OS tooling adds nothing here. distrobox and toolbox come
+        # from the Universal Blue base image, podman is required by bootc,
+        # toolbox and distrobox, buildah is in the base as well, and skopeo is
+        # listed in 00-base.yml because the NVIDIA build reaches for it.

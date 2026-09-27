@@ -971,6 +971,15 @@ for it.
 * **Files go to `/etc`**, not `/usr/etc`: on atomic Fedora the image's `/etc`
   becomes `/usr/etc` at deployment time while `/etc` stays editable locally.
   See <https://blue-build.org/blog/preferring-system-etc/>.
+* **The package lists are a delta over the base image.** An entry for something
+  `ghcr.io/ublue-os/base-main` already provides changes nothing, so those are not
+  repeated; where a whole group is inherited, the module's comments name it. The
+  check is
+  `podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n'`,
+  because `dnf` cannot answer it: some of what the base carries is a dependency
+  of something else rather than an explicit choice, while some of it (`polkit`,
+  `cpio`, `podman`, `skopeo`) is a hard requirement of a base component and so
+  effectively guaranteed.
 
 ## Troubleshooting
 
@@ -1193,13 +1202,18 @@ useradd -D | grep ^SHELL
 #
 # Two caveats on those numbers. They resolve against an EMPTY root, so they count
 # everything the base image already provides as if this image had added it: the
-# real image is several hundred packages smaller. And the declared list has since
-# been trimmed of the entries the base image already provides (mesa, libva-utils
-# and vulkan-loader in 00-base, wl-clipboard in 30-apps, fzf and just in
-# 40-devtools), so the figures as written also over-count those. Re-run the
+# real image is several hundred packages smaller. And every package list in
+# recipes/common/ has since been trimmed of the entries the base image already
+# provides, so the figures as written over-count those as well. Re-run the
 # command above for the current total.
 dnf5 --installroot=/var/tmp/checkroot --releasever=44 --use-host-config \
   --assumeno install --setopt=install_weak_deps=False <packages>
+
+# what the base image itself provides, which is what every package list in
+# recipes/common/ is a delta against. This is the check that decides whether an
+# entry is real or a no-op, and dnf cannot do it: some of what the base carries
+# is there as a dependency of something else rather than by name.
+podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n' | sort
 
 # the marginal cost of one extra package, which is how the tables under
 # "What a GNOME or KDE desktop would give you" were measured: resolve the

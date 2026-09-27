@@ -79,12 +79,12 @@ modules:
         - gvfs-archive
 
         # --- media and archives -----------------------------------------
+        # 7zip, unzip and cpio are already in the base image: cpio is required
+        # by dracut and plymouth-scripts, unzip by zip and braille-printer-app.
+        # file-roller, the archive UI thunar-archive-plugin drives, is not.
         - imv
         - mpv
         - file-roller
-        - 7zip
-        - unzip
-        - cpio
 
         # --- screenshots (Noctalia has its own UI, these are for scripts) -
         - grim
@@ -121,14 +121,14 @@ modules:
 
         # --- capture and hardware ----------------------------------------
         # satty annotates a screenshot, wf-recorder records the screen (both
-        # pair with the Print bindings and grim/slurp above), guvcview is the
-        # webcam viewer, and fwupd provides fwupdmgr for firmware updates.
+        # pair with the Print bindings and grim/slurp above) and guvcview is
+        # the webcam viewer. fwupd, which provides fwupdmgr for firmware
+        # updates, is already in the base image.
         #
-        # satty comes from Terra; the other three are in Fedora.
+        # satty comes from Terra; the other two are in Fedora.
         - satty
         - wf-recorder
         - guvcview
-        - fwupd
 
         # --- applications ------------------------------------------------
         # virt-manager plus the daemon it talks to. libvirt-daemon-kvm is the

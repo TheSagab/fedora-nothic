@@ -35,12 +35,17 @@ modules:
         - noctalia-greeter
 
         # --- XDG desktop portals ----------------------------------------
-        # niri ships /usr/share/xdg-desktop-portal/niri-portals.conf which
+        # niri ships /usr/share/xdg-desktop-portal/niri-portals.conf, which
         # picks these two backends: gnome for screencast (screen sharing) and
-        # gtk for file pickers, printing, ...  Neither pulls in GNOME Shell.
-        - xdg-desktop-portal
+        # gtk for file pickers, printing and so on. Neither pulls in GNOME
+        # Shell.
+        #
+        # The base image already carries the portal daemon itself and the gtk
+        # backend (the daemon arrives as a requirement of
+        # xdg-desktop-portal-gtk, which is one of the base image's packages).
+        # The gnome backend, which is the one that makes screen sharing work, is
+        # not there, so it is the only one listed.
         - xdg-desktop-portal-gnome
-        - xdg-desktop-portal-gtk
 
         # --- Qt apps on Wayland -----------------------------------------
         - qt5-qtwayland

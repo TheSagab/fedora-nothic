@@ -3,6 +3,15 @@
 #
 # Base system: things that are not niri/Noctalia specific but a Wayland desktop
 # needs. Everything here is installed on top of ghcr.io/ublue-os/base-main.
+#
+# Only packages the base image does *not* already provide are listed: an entry
+# for something already present is a no-op. Where a whole group is inherited,
+# the comment says so, so the requirement is still written down. The lists were
+# trimmed against the base image's own rpm database, which is the only reliable
+# check - some of what it carries is a dependency of something else it installs
+# rather than an explicit choice, and dnf cannot tell you which.
+#
+#   podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n'
 
 modules:
   - type: dnf
@@ -25,38 +34,43 @@ modules:
         - vulkan-tools
 
         # --- networking -------------------------------------------------
-        - NetworkManager
-        - NetworkManager-wifi
-        - NetworkManager-bluetooth
-        - bluez
+        # In the base image: NetworkManager and its wifi and bluetooth
+        # subpackages, and bluez, which NetworkManager-bluetooth requires.
+        # bluez-tools, the BlueZ command line front end, is not.
         - bluez-tools
 
         # --- audio (Noctalia talks to PipeWire directly) ----------------
-        - pipewire
-        - pipewire-alsa
-        - pipewire-pulseaudio
-        - pipewire-utils
-        - wireplumber
+        # In the base image: the whole PipeWire stack, pipewire, pipewire-alsa,
+        # pipewire-pulseaudio, pipewire-utils and wireplumber. pipewire itself
+        # is a hard requirement of pipewire-libs-extra, one of the base image's
+        # own packages. This is the most incidental group in the file, so if
+        # audio ever breaks after a base rebuild, these five are what to add
+        # back here.
+        #
+        # playerctl, which the media keys use, is not in the base.
         - playerctl
 
         # --- power / hardware -------------------------------------------
-        - upower
+        # upower is in the base image; these two are not.
         - brightnessctl
         - ddcutil
 
         # --- secrets (needed for Noctalia clipboard history / CalDAV) ---
+        # Not in the base image, and it is also what niri's niri-portals.conf
+        # names for org.freedesktop.impl.portal.Secret.
         - gnome-keyring
 
         # --- fonts and icons --------------------------------------------
+        # The base image already carries google-noto-emoji-fonts,
+        # adwaita-cursor-theme (required by adwaita-icon-theme) and
+        # sound-theme-freedesktop (required by libcanberra). These are the ones
+        # it does not.
         - dejavu-sans-fonts
         - dejavu-sans-mono-fonts
         - google-noto-sans-fonts
-        - google-noto-emoji-fonts
         - jetbrains-mono-fonts-all
         - fontawesome-fonts-all
         - papirus-icon-theme
-        - adwaita-cursor-theme
-        - sound-theme-freedesktop
 
         # --- runtime libraries -------------------------------------------
         # libatomic is the part of GCC's runtime that carries the atomic
@@ -70,9 +84,12 @@ modules:
         - libatomic
 
         # --- session/CLI plumbing ---------------------------------------
-        - xdg-utils
+        # Already in the base image: xdg-utils, bash-completion, polkit (which
+        # udisks2, rtkit and accountsservice all require), flatpak and rsync.
+        # xdg-user-dirs is not, and the shells are choices this image makes:
+        # fish is the default login shell and zsh is here for anyone who wants
+        # it.
         - xdg-user-dirs
-        - bash-completion
         - zsh
         - fish
 
@@ -104,11 +121,13 @@ modules:
         #
         # To see this on a running image: `rpm -V util-linux` reports
         # `missing     /usr/bin/chsh` while the owning package is installed.
-        - polkit
-        - flatpak
-        - rsync
-        # `skopeo` and `jq` are not strictly part of the desktop, but the
-        # BlueBuild `akmods` module (recipes/nvidia/akmods.yml) shells out to
-        # both, so they have to be present before that module runs.
+
+        # --- what the NVIDIA build reaches for ---------------------------
+        # Not part of the desktop, but the BlueBuild `akmods` module
+        # (recipes/nvidia/akmods.yml) shells out to both, so they have to be
+        # present before that module runs. The base image does carry both today
+        # (skopeo is required by bootc and rpm-ostree), but only the NVIDIA
+        # variant needs them and a build-time dependency that disappears is a
+        # confusing failure, so they stay listed.
         - jq
         - skopeo
