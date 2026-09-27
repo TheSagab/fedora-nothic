@@ -13,13 +13,16 @@ modules:
       install-weak-deps: false
       packages:
         # --- graphics / rendering stack ---------------------------------
-        - mesa-dri-drivers
-        - mesa-vulkan-drivers
-        - mesa-libEGL
-        - mesa-libGL
-        - libva-utils
+        # Only vulkan-tools is listed. Everything else here is already part of
+        # the base image: mesa's drivers, its EGL, GL and Vulkan ICDs, and
+        # libva-utils. That is not an accident of dependencies - the base image
+        # distro-syncs exactly those packages against negativo17's
+        # fedora-multimedia repository - so listing them again would be a no-op.
+        #
+        # vulkan-tools is the one piece the base does not carry, and it is the
+        # diagnostic half of the stack: vulkaninfo. Zed needs the driver
+        # (mesa-vulkan-drivers), which now comes from the base like the rest.
         - vulkan-tools
-        - vulkan-loader
 
         # --- networking -------------------------------------------------
         - NetworkManager
@@ -55,19 +58,52 @@ modules:
         - adwaita-cursor-theme
         - sound-theme-freedesktop
 
+        # --- runtime libraries -------------------------------------------
+        # libatomic is the part of GCC's runtime that carries the atomic
+        # operations the compiler cannot emit inline on a target (on x86-64,
+        # most of the 16-byte ones). Nothing installed from a repository needs
+        # it listed, because dnf pulls it in as a dependency; it is here for
+        # the binaries that are not packaged - the toolchains mise downloads
+        # (Node's official builds, among others) and anything else shipped as a
+        # prebuilt tarball. Fedora builds it, so no extra repository is
+        # involved, and the package is 36 KiB.
+        - libatomic
+
         # --- session/CLI plumbing ---------------------------------------
         - xdg-utils
         - xdg-user-dirs
         - bash-completion
         - zsh
         - fish
-        # Fedora splits util-linux in two. The base image has util-linux-core,
-        # which carries the essentials (mount, lsblk, agetty, login) but not
-        # chsh or chfn - those are in the full util-linux package. Anything that
-        # changes a login shell reaches for chsh, including the usual
-        # instructions and this image's `ujust set-default-shell`, and it failed
-        # with "chsh: command not found" without this.
-        - util-linux
+
+        # --- login shells, and why there is no util-linux entry here -------
+        #
+        # There is deliberately no `util-linux` entry. The full package is
+        # already part of the base image, because systemd requires it, so
+        # `dnf5 install util-linux` is a no-op: it cannot put back anything the
+        # base image removed.
+        #
+        # What is actually missing is /usr/bin/chsh, and the reason is not
+        # Fedora's util-linux split. Universal Blue deletes /usr/bin/chsh and
+        # /usr/bin/lchsh in every image built from ublue-os/main:
+        #
+        #   RUN rm -f /usr/bin/chsh && rm -f /usr/bin/lchsh && ...
+        #
+        # That is deliberate and predates the split (ublue-os/main#598,
+        # "[Discussion] Remove chsh"; PR #624, "feat: Stop supporting chsh",
+        # merged 2024-08-08). Their reasoning: changing the login shell on an
+        # atomic image is a footgun, because an account whose shell is not in
+        # the image it booted cannot log in, and a rebase to another image can
+        # leave you there. The recommended way to get a particular shell is the
+        # terminal's own `command` setting, which is exactly what this image
+        # does with `command = /usr/bin/fish` in the ghostty config.
+        #
+        # So `ujust set-default-shell` (files/justfiles/niri.just) cannot use
+        # chsh: it calls usermod through sudo, and checks /etc/shells itself,
+        # because usermod does not.
+        #
+        # To see this on a running image: `rpm -V util-linux` reports
+        # `missing     /usr/bin/chsh` while the owning package is installed.
         - polkit
         - flatpak
         - rsync

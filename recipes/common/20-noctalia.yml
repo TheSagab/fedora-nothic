@@ -15,15 +15,15 @@ modules:
       packages:
         - noctalia
 
-        # Noctalia's own Recommends, spelled out because we build with weak
-        # dependencies disabled:
-        #   upower + ddcutil -> battery and external-monitor brightness
-        #   gnome-keyring    -> Secret Service provider for saved credentials
-        # The package also hard-requires pipewire, git-core and
-        # hicolor-icon-theme, which dnf brings in automatically.
-        - upower
-        - ddcutil
-        - gnome-keyring
+        # Noctalia's own Recommends are not repeated here. This image builds
+        # with weak dependencies disabled, but it does install them: upower and
+        # ddcutil (battery and external-monitor brightness) and gnome-keyring
+        # (the Secret Service provider for saved credentials) are all in
+        # recipes/common/00-base.yml, which runs before this module, so listing
+        # them again would be a no-op. That file also says why each is there.
+        #
+        # The package hard-requires pipewire, git-core and hicolor-icon-theme,
+        # which dnf brings in automatically.
 
   # Noctalia's power-profile widget (and its Control Center shortcut) talks to
   # net.hadess.PowerProfiles. Fedora has two providers for that D-Bus name and

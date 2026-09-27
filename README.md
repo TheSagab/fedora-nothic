@@ -544,13 +544,35 @@ login shell lives in `/etc/passwd` on the installed system, not in the image:
 * For an account that already existed, run `ujust set-default-shell` to change its
   login shell (`ujust set-default-shell /bin/bash` to change it back).
 
-The recipe uses `chsh`, which Fedora does not put in the base image: it ships
-`util-linux-core`, and `chsh` and `chfn` are in the full `util-linux` package,
-which this image installs on top. If you see `chsh: command not found` on an
-older build, either run `sudo usermod --shell /usr/bin/fish "$USER"` yourself or
-update the image.
+That last one cannot use `chsh`, because there is no `chsh` in this image.
+Universal Blue deletes `/usr/bin/chsh` and `/usr/bin/lchsh` from every image
+built on `ublue-os/main`, deliberately: as ublue-os/main#598 puts it, changing
+your login shell can break your account if you rebase to an image that does not
+carry that shell (PR #624, "Stop supporting chsh"). The recommended way to get a
+particular shell is the terminal's own `command` setting, which is the ghostty
+bullet above.
 
-bash and zsh are still installed. **mise** is activated in all three via
+It is not Fedora's util-linux split, and installing `util-linux` does not undo
+it. The full package is already in the base image, because `systemd` requires
+it, and the binary was deleted from that package afterwards. A running system
+shows both halves of that:
+
+```bash
+$ command -v chsh                  # no output: it is not on PATH
+$ rpm -V util-linux | grep chsh
+missing     /usr/bin/chsh          # the package still claims the file
+```
+
+So `ujust set-default-shell` calls `usermod` through `sudo`, and checks
+`/etc/shells` itself, because `usermod` does not: it will set a shell that
+`/etc/shells` has never heard of. The recipe also warns when the shell you name
+is not under `/usr`, which is the case upstream is worried about. A shell in
+your home directory, or one installed by mise or Homebrew, is not part of the
+image, and a rebase to an image that does not provide it leaves the account
+unable to log in.
+
+`bash`, `zsh` and `fish` are all in `/etc/shells` and all installed, so moving
+between the three is safe. **mise** is activated in them via
 `/etc/profile.d/mise.sh` and `/etc/fish/conf.d/mise.fish`. Tools are installed
 per user under `~/.local/share/mise`:
 
@@ -744,8 +766,9 @@ transaction contains no `plasma`, `kwin` or KF6 libraries.
 ### What GNOME is actually in this image
 
 The other half of the question. This is every GNOME or KDE component the image
-resolves to, found by resolving the whole package set on an empty root (763
-packages) and listing what matches, and what each one is there for.
+resolves to, found by resolving the whole package set on an empty root (1134
+packages, the same figure as under "Re-checking this configuration yourself")
+and listing what matches, and what each one is there for.
 
 | Component | What needs it | Can it go? |
 | --- | --- | --- |
@@ -951,12 +974,13 @@ for it.
 
 ## Troubleshooting
 
-* **`ujust set-default-shell` fails with `chsh: command not found`**: Fedora's
-  base image ships `util-linux-core`, and `chsh`/`chfn` live in the full
-  `util-linux` package, which this image installs. On a build made before that
-  was added, the recipe falls back to `usermod` through `sudo`; if your image
-  predates the fallback too, run `sudo usermod --shell /usr/bin/fish "$USER"` and
-  log out. Verify with `getent passwd "$USER"`.
+* **`chsh: command not found`**: expected, and not something to fix. There is no
+  `chsh` in this image: Universal Blue deletes it from every image built on
+  `ublue-os/main`, on purpose, because changing the login shell on an atomic
+  image can lock you out after a rebase (see "Shells"). `ujust set-default-shell`
+  therefore goes through `usermod`, and needs `sudo` for it. To do it by hand:
+  `sudo usermod --shell /usr/bin/fish "$USER"`, then log out. Verify with
+  `getent passwd "$USER"`.
 * **No sound**: `systemctl --user status pipewire wireplumber`. The units are
   enabled by the packages' systemd presets; if they are missing, run
   `systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service`.
@@ -1089,7 +1113,7 @@ Nothing below requires touching more than one or two files.
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
-| **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell` (existing accounts) | See the Shells section above |
+| **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell`, which goes through `usermod` because there is no `chsh` (existing accounts) | See the Shells section above |
 | Noctalia ships a small default config (dark, top bar, overview type-to-launch) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
 | Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
 | Images are signed with your own cosign key | `90-final.yml` + the `SIGNING_SECRET` secret | Comment out the `signing` module to build unsigned while experimenting |
@@ -1154,7 +1178,8 @@ readlink -f /etc/systemd/system/display-manager.service
 systemd-analyze verify /usr/lib/systemd/system/greetd.service
 
 # the user-facing recipes, end to end: this validates the config with the real
-# niri binary, and the second one really does change your login shell
+# niri binary, and the second one really does change your login shell (it goes
+# through sudo usermod, and cannot use chsh: ublue removes it - see "Shells")
 ujust niri-validate
 ujust set-default-shell /usr/bin/fish
 
@@ -1165,6 +1190,14 @@ useradd -D | grep ^SHELL
 # the package set: how heavy it is, and that there is no desktop in it. Feed it
 # every package the recipes/common dnf modules name; this is where the numbers
 # in the Design notes and in 30-apps.yml come from. Run it on a Fedora 44 host.
+#
+# Two caveats on those numbers. They resolve against an EMPTY root, so they count
+# everything the base image already provides as if this image had added it: the
+# real image is several hundred packages smaller. And the declared list has since
+# been trimmed of the entries the base image already provides (mesa, libva-utils
+# and vulkan-loader in 00-base, wl-clipboard in 30-apps, fzf and just in
+# 40-devtools), so the figures as written also over-count those. Re-run the
+# command above for the current total.
 dnf5 --installroot=/var/tmp/checkroot --releasever=44 --use-host-config \
   --assumeno install --setopt=install_weak_deps=False <packages>
 

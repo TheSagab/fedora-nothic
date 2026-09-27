@@ -127,16 +127,21 @@ libvirt-setup:
 
 # Change the login shell of the current user (defaults to fish)
 #
-# This image sets fish as the shell for accounts created later, but an account
-# that already existed keeps whatever shell it had, so this is how you switch it.
+# This image sets fish as the shell for accounts created later, and ghostty is
+# configured to launch fish regardless of the login shell, so this is only for
+# an account whose /etc/passwd entry still says something else.
+#
+# It goes through usermod, not chsh. Universal Blue deletes /usr/bin/chsh from
+# every image built on ublue-os/main, on purpose: changing the login shell on an
+# atomic image can lock you out of your account if you later rebase to an image
+# that does not carry that shell (ublue-os/main#598). For the same reason this
+# refuses a shell that is not listed in /etc/shells, and it checks /etc/shells
+# itself, because usermod does not.
+#
 # Pass a shell to use something else: `ujust set-default-shell /bin/bash`
 [group('Desktop')]
 set-default-shell shell="/usr/bin/fish":
     #!/usr/bin/env bash
-    # chsh and chfn live in the full util-linux package. Fedora's base image has
-    # only util-linux-core, which does not include them, so the image installs
-    # util-linux on top; the usermod fallback is here so this recipe also works
-    # on an image built before that.
     set -euo pipefail
     # `sudo ujust ...` would otherwise report and change root's shell.
     target_user="${SUDO_USER:-${USER:-$(id -un)}}"
@@ -146,7 +151,7 @@ set-default-shell shell="/usr/bin/fish":
         exit 1
     fi
     if ! grep -qxF "$target" /etc/shells; then
-        echo "$target is not listed in /etc/shells, so chsh will refuse it." >&2
+        echo "$target is not listed in /etc/shells, so it is not a usable login shell." >&2
         echo "Available: $(grep -v '^#' /etc/shells | tr '\n' ' ')" >&2
         exit 1
     fi
@@ -155,14 +160,25 @@ set-default-shell shell="/usr/bin/fish":
         echo "The login shell of $target_user is already $target."
         exit 0
     fi
-    if command -v chsh >/dev/null 2>&1; then
-        chsh -s "$target" "$target_user"
+    case "$target" in
+        /usr/*|/bin/*) : ;;
+        *)
+            echo "warning: $target is outside /usr, so it belongs to your home" >&2
+            echo "         directory or to something you installed yourself. If a" >&2
+            echo "         future rebase does not provide it, $target_user will not be" >&2
+            echo "         able to log in. Only do this if you keep the shell there." >&2
+            ;;
+    esac
+    if [ "$(id -u)" -eq 0 ]; then
+        # Running under `sudo ujust ...`, so the shell change is for the
+        # invoking user, computed above from SUDO_USER.
+        usermod --shell "$target" "$target_user"
     elif command -v sudo >/dev/null 2>&1; then
-        echo "chsh is not installed, falling back to usermod, which needs sudo."
+        echo "Changing a login shell needs root; running usermod through sudo."
         sudo usermod --shell "$target" "$target_user"
     else
-        echo "Neither chsh nor sudo is available here." >&2
-        echo "Install util-linux, or run: usermod --shell $target $target_user" >&2
+        echo "usermod needs root and there is no sudo here." >&2
+        echo "Run: usermod --shell $target $target_user" >&2
         exit 1
     fi
     echo "Login shell of $target_user changed from $current to $target."

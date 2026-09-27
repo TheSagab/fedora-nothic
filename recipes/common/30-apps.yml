@@ -16,6 +16,12 @@
 # ~3 GiB. libvirt-daemon-kvm alone accounts for 163 of those packages and 261 MiB,
 # which is the qemu stack behind virt-manager.
 #
+# The two totals above are a little high now: they count packages the base image
+# already provides, and the declared list has since been trimmed of them. The
+# note in the README's "Re-checking this configuration yourself" section has the
+# detail. The marginal figures below are unaffected, because a package that was
+# already present in the image costs nothing.
+#
 # Measured on this image instead, so that anything already present costs nothing,
 # the largest single additions are:
 #
@@ -53,7 +59,10 @@ modules:
         - ghostty-fish-completion
         - foot
         - fuzzel
-        - wl-clipboard
+        # wl-clipboard is not repeated here: it is in Universal Blue's own
+        # package list for the base image, not merely a dependency of something
+        # else, so it is present either way. cliphist and the Mod+Ctrl+V
+        # binding above still work as described.
 
         # --- file manager + its integrations ----------------------------
         # Note the capital T: Fedora's package is called Thunar.

@@ -26,7 +26,10 @@ modules:
   #
   # Weighed against an empty root this module takes the image from 1022 to 1134
   # packages, so it is not free either - but almost all of it is shared with the
-  # desktop stack rather than new.
+  # desktop stack rather than new. Both figures are a little high now, for the
+  # reason given in the README's "Re-checking this configuration yourself"
+  # section: the declared list has been trimmed of entries the base image
+  # already provides.
   - type: dnf
     install:
       install-weak-deps: false
@@ -38,7 +41,10 @@ modules:
         - bat
         - tree
         - yq
-        - just
+        # `just` is not repeated here: the base image installs it, and
+        # ublue-os-just, which is what provides `ujust`, requires it, so it is
+        # on the image either way.
+        #
         # Dotfile manager. Fedora carries it, so no COPR or tarball needed:
         # `chezmoi init <repo>` on a new machine is the whole workflow.
         - chezmoi
@@ -49,10 +55,11 @@ modules:
         # for fish, bash and zsh. starship comes from Terra; atuin from Fedora.
         #
         # atuin takes Ctrl-R, so fzf's own history widget is left unwired - see
-        # the note in /etc/fish/conf.d/atuin.fish.
+        # the note in /etc/fish/conf.d/atuin.fish. fzf itself is already in the
+        # base image (Universal Blue's own package list, not a dependency of
+        # something else), so it is not repeated here.
         - starship
         - atuin
-        - fzf
         - eza
         - duf
         - tldr
@@ -82,8 +89,9 @@ modules:
         # (libxkbcommon-x11). zed-cli is separate in Terra and is what puts the
         # `zed` command on PATH for opening a file from a shell.
         #
-        # It renders through Vulkan, so it needs mesa-vulkan-drivers from
-        # 00-base.yml. That works on both variants, including the NVIDIA one.
+        # It renders through Vulkan, so it needs mesa-vulkan-drivers, which the
+        # base image provides (see recipes/common/00-base.yml). That works on
+        # both variants, including the NVIDIA one.
         - zed
         - zed-cli
 
