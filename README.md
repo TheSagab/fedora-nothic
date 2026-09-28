@@ -52,6 +52,7 @@ files/
   system/                    # copied verbatim onto / of the image
     etc/niri/config.kdl      # the niri configuration (system default)
     etc/xdg/umbriel/config.toml  # the Umbriel configuration (system default)
+    etc/xdg/xdg-desktop-portal/niri-portals.conf  # file choosers come from gtk, not gnome
     etc/greetd/config.toml   # login manager configuration
     var/lib/noctalia-greeter/greeter.toml  # keeps niri the default session
     etc/default/useradd      # SHELL=/usr/bin/fish for accounts created later
@@ -1033,6 +1034,32 @@ for it.
   `overlay` and `vfs` storage drivers, in the helper that applies the layer
   (`ApplyLayer`). Even pulling a 1 KiB image fails. Build on a real Linux host or
   let GitHub Actions do it.
+* **A Flatpak application never shows a file chooser** (Chrome's "Save image
+  as", its download prompt, "Upload"; Discord, Steam and anything else from
+  Flathub behave the same way): the portal was failing, not the file manager.
+
+  niri's own `/usr/share/xdg-desktop-portal/niri-portals.conf` names the GNOME
+  backend for that interface, and in GNOME 50 that backend no longer draws the
+  chooser: it calls Nautilus, which this image does not install, so the call
+  fails immediately and the application shows nothing.
+
+  ```
+  $ journalctl --user -b | grep FileChooser
+  xdg-desktop-portal-gnome[2101]: Delegated FileChooser call failed: The name is
+  not activatable
+  ```
+
+  The image ships
+  `files/system/etc/xdg/xdg-desktop-portal/niri-portals.conf`, which is niri's
+  contract with `org.freedesktop.impl.portal.FileChooser=gtk` added, so the GTK
+  backend serves that one interface. The shipped `/etc/niri/config.kdl` also
+  floats the window (`window-rule` matching `xdg-desktop-portal-gtk`), because
+  niri would otherwise tile it into the column strip, off-screen.
+
+  Thunar is not involved either way, and changing it will not help: a sandboxed
+  application cannot open a file chooser for itself whatever file manager is
+  installed, it can only ask the portal. Thunar matters for the destination
+  folder, and for its own windows.
 * **A graphical password prompt never appears** (mounting a disk in Thunar,
   running `gparted`, anything that asks polkit): the polkit *authentication
   agent* is what draws that prompt, and it is part of the desktop shell, not of
@@ -1119,6 +1146,7 @@ Nothing below requires touching more than one or two files.
 | Umbriel has a **working default configuration** at `/etc/xdg/umbriel/config.toml` (it autostarts Noctalia and rebinds the terminal to ghostty) | `files/system/etc/xdg/umbriel/config.toml`, found through `XDG_CONFIG_DIRS`, including the packaged `/usr/share/umbriel/config.toml` | Delete that file to fall back to the packaged example, which starts nothing and expects kitty |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image; the section above lists what to add for the things a GNOME or KDE desktop would have provided |
+| File choosers are served by the **GTK** portal backend, not the GNOME one that niri names first | `files/system/etc/xdg/xdg-desktop-portal/niri-portals.conf` | Delete that file to go back to niri's default, but the GNOME backend then needs Nautilus installed (`dnf install nautilus`) before a sandboxed application can open a chooser at all |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |

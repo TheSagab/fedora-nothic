@@ -178,6 +178,24 @@ window-rule {
     default-window-height { fixed 920; }
 }
 
+// The file choosers that sandboxed applications get from xdg-desktop-portal.
+//
+// They are drawn by a separate process, so as far as the compositor is concerned
+// they are not dialogs belonging to the application that asked for them, and
+// niri would tile them into the column strip instead. On a workspace that is
+// already full they are created off-screen, which looks exactly like the menu
+// entry having done nothing. Floating them is what makes them land on top of the
+// window that asked, where you are looking.
+//
+// The app id is the GTK portal backend's; see
+// files/system/etc/xdg/xdg-desktop-portal/niri-portals.conf for why that backend
+// is the one serving FileChooser here. `niri msg windows` prints the app id of
+// whatever is focused, which is how this value was confirmed.
+window-rule {
+    match app-id="xdg-desktop-portal-gtk"
+    open-floating true
+}
+
 // ---------------------------------------------------------------------------
 // Layer rules (Noctalia surfaces)
 // ---------------------------------------------------------------------------

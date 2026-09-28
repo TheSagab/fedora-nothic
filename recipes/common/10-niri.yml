@@ -44,7 +44,15 @@ modules:
         # backend (the daemon arrives as a requirement of
         # xdg-desktop-portal-gtk, which is one of the base image's packages).
         # The gnome backend, which is the one that makes screen sharing work, is
-        # not there, so it is the only one listed.
+        # not there, so it is the only one listed here.
+        #
+        # Note that file pickers do not actually come from the gtk backend under
+        # niri's own contract: the GNOME backend is first in its default list,
+        # and in GNOME 50 it delegates FileChooser to Nautilus instead of drawing
+        # it. Nautilus is not installed here, so every file chooser in a
+        # sandboxed application used to fail silently. That is what
+        # files/system/etc/xdg/xdg-desktop-portal/niri-portals.conf changes: it
+        # sends that one interface to gtk and leaves the rest alone.
         - xdg-desktop-portal-gnome
 
         # --- Qt apps on Wayland -----------------------------------------
