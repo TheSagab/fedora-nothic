@@ -1060,6 +1060,23 @@ for it.
   application cannot open a file chooser for itself whatever file manager is
   installed, it can only ask the portal. Thunar matters for the destination
   folder, and for its own windows.
+* **`Alt+Tab` leaves the window switcher on screen when tapped quickly**: the
+  switcher takes an exclusive keyboard layer surface when it maps, so on a fast
+  tap `Alt` can be released before it has focus. That release is then never
+  delivered, and the overlay waits for something that already happened, until
+  `Escape` clears it. Holding for a moment works, because the release arrives
+  after the overlay has focus.
+
+  The fix is the `hold` token on the binding, which is the form Noctalia's own
+  documentation uses for both niri and Hyprland:
+
+  ```
+  Alt+Tab { spawn-sh "noctalia msg window-switcher hold"; }
+  ```
+
+  Both configs in this image use it (`files/system/etc/niri/config.kdl` and
+  `files/system/etc/xdg/umbriel/config.toml`). Without `hold`, Noctalia cannot
+  tell a quick tap from a key that is still held.
 * **A graphical password prompt never appears** (mounting a disk in Thunar,
   running `gparted`, anything that asks polkit): the polkit *authentication
   agent* is what draws that prompt, and it is part of the desktop shell, not of

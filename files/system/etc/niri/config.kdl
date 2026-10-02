@@ -284,7 +284,14 @@ binds {
     Mod+Space hotkey-overlay-title="Launcher: Noctalia" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+S hotkey-overlay-title="Control centre" { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Shift+S hotkey-overlay-title="Noctalia settings" { spawn-sh "noctalia msg settings-toggle"; }
-    Alt+Tab hotkey-overlay-title="Window switcher" { spawn-sh "noctalia msg window-switcher"; }
+    // The "hold" token is what Noctalia's own niri documentation uses, and it
+    // matters for a quick tap. The switcher takes an exclusive keyboard layer
+    // surface when it maps, so on a fast Alt+Tab you can release Alt before it has
+    // focus at all: that release is never delivered, the overlay sits there
+    // waiting, and only Escape clears it. "hold" tells Noctalia to resolve the
+    // commit from the modifiers held when it takes focus, which is exactly that
+    // case. A longer hold already worked, because the release arrives after focus.
+    Alt+Tab hotkey-overlay-title="Window switcher" { spawn-sh "noctalia msg window-switcher hold"; }
     Mod+E hotkey-overlay-title="Files: Thunar" { spawn "thunar"; }
     Mod+Ctrl+V hotkey-overlay-title="Clipboard history" { spawn-sh "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
 
