@@ -63,6 +63,10 @@ show_cheatsheet = true
 # tap the Alt release can arrive before it has focus and is then never seen, which
 # leaves the overlay on screen until Escape. With "hold" it resolves the commit
 # from the modifiers held when it takes focus.
+#
+# It needs noctalia 5.2.1 or newer; older builds accept the argument and ignore
+# it (check `noctalia --version`). Keeping it is harmless either way, and it
+# starts working as soon as the package moves.
 "Alt+Tab" = { action = "spawn:noctalia msg window-switcher hold", repeat = false }
 "Super+Alt+L" = { action = "spawn:noctalia msg session lock", repeat = false }
 

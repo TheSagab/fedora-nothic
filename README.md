@@ -1067,16 +1067,28 @@ for it.
   `Escape` clears it. Holding for a moment works, because the release arrives
   after the overlay has focus.
 
-  The fix is the `hold` token on the binding, which is the form Noctalia's own
-  documentation uses for both niri and Hyprland:
+  Noctalia fixed this in **5.2.1**, with the `hold` token that its own
+  documentation uses for niri and Hyprland:
 
   ```
   Alt+Tab { spawn-sh "noctalia msg window-switcher hold"; }
   ```
 
-  Both configs in this image use it (`files/system/etc/niri/config.kdl` and
-  `files/system/etc/xdg/umbriel/config.toml`). Without `hold`, Noctalia cannot
-  tell a quick tap from a key that is still held.
+  Both configs in this image pass `hold` (`files/system/etc/niri/config.kdl` and
+  `files/system/etc/xdg/umbriel/config.toml`), but the token only does anything
+  from 5.2.1 on. Earlier builds accept the extra argument and ignore it without
+  printing an error, which makes a version problem look like a config problem:
+
+  ```
+  $ noctalia --version        # v5.2.1 or newer is what makes hold effective
+  ```
+
+  Fedora 44 sat on 5.2.0 with 5.2.1 pending for a while, so an image built
+  against 5.2.0 has this problem and needs no config change once the package
+  moves. If you are chasing it, check the version first: the shortcut state
+  machine that `hold` drives does not exist before 5.2.1 at all
+  (`src/shell/switcher/window_switcher_shortcut_state.h` first appears there),
+  and the older builds' `window-switcher` handler takes no action argument.
 * **A graphical password prompt never appears** (mounting a disk in Thunar,
   running `gparted`, anything that asks polkit): the polkit *authentication
   agent* is what draws that prompt, and it is part of the desktop shell, not of

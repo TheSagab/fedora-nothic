@@ -291,6 +291,12 @@ binds {
     // waiting, and only Escape clears it. "hold" tells Noctalia to resolve the
     // commit from the modifiers held when it takes focus, which is exactly that
     // case. A longer hold already worked, because the release arrives after focus.
+    // This needs noctalia 5.2.1 or newer. The option did not exist before that
+    // release: older builds accept the extra argument and silently ignore it, so
+    // on them a quick tap still leaves the overlay up. Check with
+    // `noctalia --version`. Fedora 44 shipped 5.2.0 for a while, with 5.2.1
+    // pending, so an image built against 5.2.0 still has the problem and needs no
+    // config change once the package moves.
     Alt+Tab hotkey-overlay-title="Window switcher" { spawn-sh "noctalia msg window-switcher hold"; }
     Mod+E hotkey-overlay-title="Files: Thunar" { spawn "thunar"; }
     Mod+Ctrl+V hotkey-overlay-title="Clipboard history" { spawn-sh "cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"; }
