@@ -1151,7 +1151,7 @@ Nothing below requires touching more than one or two files.
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
 | **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell`, which goes through `usermod` because there is no `chsh` (existing accounts) | See the Shells section above |
-| Noctalia ships a small default config (dark, top bar, overview type-to-launch) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
+| Noctalia ships a small default config (dark, top bar, overview type-to-launch, Blueman's tray icon hidden) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
 | Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
 | Images are signed with your own cosign key | `90-final.yml` + the `SIGNING_SECRET` secret | Comment out the `signing` module to build unsigned while experimenting |
 

@@ -20,3 +20,26 @@ position = "top"
 [shell]
 # Let typing in niri's overview open Noctalia's launcher.
 niri_overview_type_to_launch_enabled = true
+
+[widget.tray]
+# Hide Blueman's status icon from the bar.
+#
+# The image installs blueman, and blueman-applet is autostarted by systemd's
+# XDG-autostart generator (from /etc/xdg/autostart/blueman.desktop), so its tray
+# icon is there from login whenever a Bluetooth adapter exists. Blueman has no
+# setting for this: its StatusIcon plugin recomputes visibility from the adapter
+# list every time that list changes, so with an adapter present the icon always
+# shows. Hiding the item in Noctalia's tray widget is the supported way, and it
+# leaves Blueman itself running, so blueman-manager and the applet's menu are
+# unaffected.
+#
+# The list is matched by exact equality against each tray item's id, title, bus
+# name, object path, process name and icon name. "blueman" is the item's
+# StatusNotifierItem Id, and it is stable across sessions; do not use its bus
+# name, which is a per-session unique name such as :1.47. The object path
+# /org/blueman/sni is also stable and works as a second token if the id ever
+# changes. Nothing else matches "blueman", and Noctalia's own Bluetooth
+# indicator is a bar widget rather than a tray item, so it is not affected.
+#
+# Delete the two lines below to get the icon back.
+hidden = ["blueman"]
