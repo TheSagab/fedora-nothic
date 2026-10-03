@@ -423,6 +423,65 @@ uncomment the `output` block in `files/system/etc/niri/config.kdl` (or your own
 copy) and set `scale 1`, or try it live with
 `niri msg output <connector> scale 1`.
 
+### Lock screen
+
+`Super+Alt+L` locks the session (`noctalia msg session lock`), and Noctalia's
+`lock_before_suspend` (on by default) holds a logind sleep-delay inhibitor and
+locks on `PrepareForSleep` before any suspend or hibernate, lid-close sleep
+included, so no separate idle daemon is needed for lock-before-sleep.
+
+Its contents are configured in two independent ways, which matters if you want an
+action on the lock screen but not elsewhere:
+
+* **Buttons** come from `[shell.session].actions`, the same list that drives the
+  session panel, the launcher's `/session` provider and
+  `noctalia msg session <action>`. The lock screen only filters out the lock
+  actions, because you are already locked. There is no per-surface scope, so a
+  suspend entry added there appears in the session panel too.
+* **Widgets** are free-form. `[lockscreen_widgets]` uses the same widget types as
+  the desktop widgets, and that set includes `button`, which runs a shell command.
+  This is how you get something on the lock screen alone.
+
+So a suspend button that appears only when locked is a `button` widget:
+
+```toml
+[lockscreen_widgets]
+enabled = true
+
+[lockscreen_widgets.widget."lockscreen-suspend@eDP-1"]
+type       = "button"
+output     = "eDP-1"        # your connector, from `niri msg outputs`
+cx         = 960.0          # logical pixels on that output
+cy         = 1120.0
+box_width  = 0.0            # 0 = auto-fit the content
+box_height = 0.0
+rotation   = 0.0
+enabled    = true
+
+    [lockscreen_widgets.widget."lockscreen-suspend@eDP-1".settings]
+    label   = "Suspend"
+    command = "systemctl suspend"
+    variant = "outline"
+```
+
+Three things about that snippet. `[lockscreen_widgets] enabled = true` is required
+before any of them render, and the login box lives in the same section, so an
+account that never added a widget normally has it off. The widget also has to be
+in `widget_order`. And `cx`/`cy` are logical pixels on one named monitor, which is
+why this is a recipe rather than a shipped default: place it with the lock screen
+widget editor instead, which needs the session unlocked, previews the result, and
+writes `settings.toml` for you:
+
+```bash
+noctalia msg lockscreen-widgets-edit    # or Settings -> Security -> Lock screen -> Toggle Editor
+```
+
+The editor's add-widget list is the same as the desktop's, so `button` is there.
+For suspending specifically, note that `noctalia msg session suspend` only works
+while `suspend` is an enabled entry in `[shell.session].actions`, which is exactly
+what you do not want here, so a widget running `systemctl suspend` directly is the
+straightforward form.
+
 ### Choosing a compositor
 
 The image ships **two** sessions and niri is the default one.

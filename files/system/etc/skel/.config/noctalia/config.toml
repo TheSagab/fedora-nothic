@@ -43,3 +43,11 @@ niri_overview_type_to_launch_enabled = true
 #
 # Delete the two lines below to get the icon back.
 hidden = ["blueman"]
+
+# Session actions are left at Noctalia's built-in five (Lock, Log out, Lock &
+# Suspend, Reboot, Shut down). That list is shared with the session panel, the
+# launcher's /session provider and `noctalia msg session <action>`, so it cannot be
+# scoped to one surface: an entry added for the lock screen shows up in the panel
+# too. For a button that exists only on the lock screen, add a `button` widget
+# under [lockscreen_widgets] instead. See "Lock screen" in README.md for the
+# recipe, including why the coordinates are not shipped here.
