@@ -1032,6 +1032,27 @@ for it.
 * **Files go to `/etc`**, not `/usr/etc`: on atomic Fedora the image's `/etc`
   becomes `/usr/etc` at deployment time while `/etc` stays editable locally.
   See <https://blue-build.org/blog/preferring-system-etc/>.
+* **But a change to a shipped `/etc` file only reaches machines that do not have
+  it yet.** An existing machine keeps its own `/etc`, so editing one of these
+  files changes new deployments only: the new content appears in the image's
+  `/usr/etc`, and the live `/etc` keeps the copy it had, which is what niri,
+  greetd and the rest actually read. Files the image *adds* do land, since there
+  is nothing to keep. Observed here: after `files/system/etc/niri/config.kdl`
+  gained the file chooser window rule and the `hold` token, a machine already
+  running the image still had its old `/etc/niri/config.kdl`, while
+  `/etc/xdg/xdg-desktop-portal/niri-portals.conf`, a file the image had not
+  shipped before, arrived as expected. To see the drift and adopt a new version on
+  one machine:
+
+  ```bash
+  sudo ostree admin config-diff                     # /etc versus /usr/etc
+  sudo cp /usr/etc/niri/config.kdl /etc/niri/config.kdl
+  ```
+
+  That is the explanation to reach for when a change to a shipped config file
+  "does not take effect on the machine I already had". A user-level file in
+  `~/.config` avoids the problem entirely, which is why the local overlay pattern
+  exists in the Shells and Lock screen sections above.
 * **The package lists are a delta over the base image.** An entry for something
   `ghcr.io/ublue-os/base-main` already provides changes nothing, so those are not
   repeated; where a whole group is inherited, the module's comments name it. The
