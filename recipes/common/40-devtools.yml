@@ -94,7 +94,22 @@ modules:
         - zed
         - zed-cli
 
-        # Container/OS tooling adds nothing here. distrobox and toolbox come
-        # from the Universal Blue base image, podman is required by bootc,
-        # toolbox and distrobox, buildah is in the base as well, and skopeo is
-        # listed in 00-base.yml because the NVIDIA build reaches for it.
+        # Container/OS tooling. distrobox, toolbox and buildah come from the
+        # Universal Blue base image, podman is required by bootc, toolbox and
+        # distrobox, and skopeo is listed in 00-base.yml because the NVIDIA build
+        # reaches for it. podman-compose is the one piece that was missing:
+        #
+        # `podman compose` is only a wrapper. It looks for an external compose
+        # provider and shells out to it, so with neither of the two installed the
+        # command fails outright with "looking up compose provider failed" and
+        # lists every path it tried. That is what it did on this image.
+        #
+        # podman-compose is the provider to have here: /usr/bin/podman-compose is
+        # exactly the name in podman's search list, the package is 782 KiB, and
+        # its only new dependency is python3-dotenv (python3 and python3-pyyaml
+        # are already on the image). The alternative, Fedora's docker-compose, is
+        # 31 MiB and requires docker-cli or podman-docker, which is a lot of Docker
+        # to add to an image that carries none. Worth knowing for later: podman
+        # prefers docker-compose whenever both are present, since the wrapper
+        # treats it as the reference implementation.
+        - podman-compose

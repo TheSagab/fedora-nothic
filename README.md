@@ -357,7 +357,8 @@ What else is on the image, beyond the desktop itself:
   fuzzel.
 * **Development**: mise, chezmoi, git, gh, neovim, helix, **Zed** (from Terra),
   ripgrep, fd-find, bat, eza, fzf, git-delta, difftastic, yazi, k9s, gping, duf,
-  tldr, fastfetch, starship, atuin, tree, yq, just, podman, buildah.
+  tldr, fastfetch, starship, atuin, tree, yq, just, podman, podman-compose,
+  buildah.
 
 Zed is the one graphical editor here and the largest single package in the
 image: 309 MiB installed, from Terra, because Fedora does not package it. It
@@ -1217,6 +1218,23 @@ for it.
   yet. Wait for their next build and re-run. Note this image never pulls a kernel
   of its own - the resolved package set contains no `kernel*` package, only
   `kmod`/`kmod-libs` - so the base image's kernel is what the kmod must match.
+* **`podman compose` fails with `looking up compose provider failed`**: expected
+  on an image with no compose provider, because `podman compose` is only a wrapper
+  that shells out to one. The error lists every path it tried, which is the tell:
+
+  ```
+  Error: looking up compose provider failed
+  7 errors occurred:
+          * exec: "docker-compose": executable file not found in $PATH
+          * exec: "podman-compose": executable file not found in $PATH
+  ```
+
+  This image ships `podman-compose` for that reason (`40-devtools.yml`). On a
+  build made before that, add one to the running system with
+  `sudo rpm-ostree install podman-compose` and reboot, or use a newer image.
+  `podman-compose` rather than `docker-compose`: the latter is 31 MiB and needs
+  `docker-cli` or `podman-docker`, and podman prefers it over `podman-compose`
+  whenever both are present.
 
 ## Assumptions this image makes, and how to change them
 
