@@ -34,9 +34,9 @@ umbriel-config-reset:
 umbriel-validate:
     #!/usr/bin/env bash
     set -euo pipefail
-    umbriel validate -c /etc/xdg/umbriel/config.toml
+    umbriel config validate -c /etc/xdg/umbriel/config.toml
     user_config="${XDG_CONFIG_HOME:-$HOME/.config}/umbriel/config.toml"
     if [ -e "$user_config" ]; then
         echo
-        umbriel validate -c "$user_config"
+        umbriel config validate -c "$user_config"
     fi
