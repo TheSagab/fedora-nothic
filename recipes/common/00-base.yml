@@ -113,7 +113,7 @@ modules:
         # the image it booted cannot log in, and a rebase to another image can
         # leave you there. The recommended way to get a particular shell is the
         # terminal's own `command` setting, which is exactly what this image
-        # does with `command = /usr/bin/fish` in the ghostty config.
+        # does with `command = direct:/usr/bin/fish` in the monstar config.
         #
         # So `ujust set-default-shell` (files/justfiles/niri.just) cannot use
         # chsh: it calls usermod through sudo, and checks /etc/shells itself,

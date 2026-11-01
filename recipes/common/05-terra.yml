@@ -7,8 +7,8 @@
 #   noctalia, noctalia-greeter   the shell and the login greeter
 #                                (20-noctalia.yml, 10-niri.yml)
 #   umbriel-nightly              the second compositor (15-umbriel.yml)
-#   ghostty + its -terminfo, -shell-integration and -fish-completion
-#                                the default terminal (30-apps.yml)
+#   ghostty-terminfo             the xterm-ghostty terminfo entry, which monstar
+#                                1.0.1 still sets for child shells (30-apps.yml)
 #   xwayland-satellite           X11 support for niri and Umbriel (10-niri.yml)
 #   bottom, satty, cliphist      a btop-alike, the screenshot annotator and the
 #                                clipboard history (30-apps.yml)
@@ -44,10 +44,11 @@
 # with the measurements behind them; gpgcheck=1 is untouched, so every package
 # from Terra is still signature checked.
 #
-# The third module is the check: it asks Terra for the two packages this image
-# takes from it, so that a repository problem stops the build here, naming
-# itself, instead of surfacing as "No match for argument: ghostty" two modules
-# later. It also warms the metadata cache for the installs that follow.
+# The third module is the check: it asks Terra for the packages this image takes
+# from it that are needed by the early modules, so that a repository problem
+# stops the build here, naming itself, instead of surfacing as "No match for
+# argument: noctalia-greeter" two modules later. It also warms the metadata
+# cache for the installs that follow.
 #
 # Two notes on keeping Terra enabled in the finished image:
 #
@@ -89,7 +90,7 @@ modules:
         # Resolve both packages through the repository definition that the rest
         # of the build will use. A failure here is a Terra problem, not an image
         # problem.
-        found=$(dnf5 repoquery --repo terra --available ghostty noctalia-greeter) || {
+        found=$(dnf5 repoquery --repo terra --available noctalia-greeter ghostty-terminfo) || {
           echo "ERROR: Terra could not be queried. Is repos.fyralabs.com reachable?" >&2
           exit 1
         }
@@ -98,10 +99,10 @@ modules:
           echo "       load. Check files/system/etc/yum.repos.d/terra.repo." >&2
           exit 1
         fi
-        for pkg in ghostty noctalia-greeter; do
+        for pkg in noctalia-greeter ghostty-terminfo; do
           case "$found" in
             *"$pkg"*) : ;;
             *) echo "ERROR: Terra does not offer $pkg." >&2; exit 1 ;;
           esac
         done
-        echo "Terra offers ghostty and noctalia-greeter."
+        echo "Terra offers noctalia-greeter and ghostty-terminfo."

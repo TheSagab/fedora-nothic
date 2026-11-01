@@ -1,0 +1,27 @@
+# monstar configuration shipped by the fedora-nothic image.
+#
+# monstar is the terminal bound to Mod+T in the niri configuration. It reads
+# only $XDG_CONFIG_HOME/monstar/config (there is no system-wide path), so this
+# file in /etc/skel reaches accounts created after the image was built. On an
+# existing account run `ujust monstar-config` to copy it into your home;
+# `ujust monstar-config-reset` puts it back.
+#
+# Reload a running window with Ctrl+Shift+, or `pkill -USR1 monstar`.
+# Reference: man 5 monstar
+
+# Launch fish regardless of the account's login shell, so the terminal is fish
+# even for users whose /etc/passwd entry still says bash. `direct:` skips the
+# /bin/sh -c wrapper. The login shell is changed separately (SHELL in
+# /etc/default/useradd for new accounts, `ujust set-default-shell` for existing
+# ones).
+command = direct:/usr/bin/fish
+
+# The image ships JetBrains Mono; Fontconfig selects the bold and italic faces
+# and supplies fallbacks itself.
+font-family = JetBrains Mono
+font-size = 11
+
+window-padding-x = 10
+window-padding-y = 10
+
+# Leave `theme` unset: monstar then follows the desktop's light/dark preference.

@@ -43,9 +43,10 @@ show_cheatsheet = true
 
 [keybinds]
 # --- applications ---------------------------------------------------------
-# Upstream binds Mod+Return to kitty. This image ships ghostty, and foot as a
-# fallback, so the terminal key actually opens a terminal.
-"Mod+Return" = { action = "spawn:ghostty", repeat = false }
+# Upstream binds Mod+Return to kitty. This image ships monstar as the primary
+# terminal, with foot as the fallback, so the terminal keys actually open a
+# terminal.
+"Mod+Return" = { action = "spawn:monstar", repeat = false }
 "Mod+Shift+Return" = "spawn:foot"
 "Mod+E" = "spawn:thunar"
 

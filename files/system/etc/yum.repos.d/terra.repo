@@ -24,8 +24,9 @@
 #      >>> repomd.xml GPG signature verification error: Signing key not found
 #
 #    and dnf then treats the repository as offering no packages at all, so
-#    `dnf5 install ghostty` fails with "No match for argument: ghostty". With
-#    repo_gpgcheck=0 the same install resolves, downloads and completes.
+#    `dnf5 install noctalia-greeter` fails with "No match for argument:
+#    noctalia-greeter". With repo_gpgcheck=0 the same install resolves,
+#    downloads and completes.
 #
 #    The signature is not the problem. gpg verifies repomd.xml.asc against
 #    RPM-GPG-KEY-terra44, the very key this file points gpgkey at:

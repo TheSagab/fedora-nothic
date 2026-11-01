@@ -14,6 +14,7 @@ niri-info:
     echo "Kernel:     $(uname -r)"
     echo "Compositor: $(niri --version 2>/dev/null || echo 'not installed')"
     echo "Shell:      $(noctalia --version 2>/dev/null || echo 'not installed')"
+    echo "Terminal:   $(monstar --version 2>/dev/null || echo 'not installed')"
     echo "Login sh:   $(getent passwd "$USER" | cut -d: -f7)"
     echo "mise:       $(mise --version 2>/dev/null || echo 'not installed')"
     echo
@@ -62,35 +63,36 @@ noctalia-config:
     install -D -m644 /etc/skel/.config/noctalia/config.toml "$dest"
     echo "Wrote $dest - Noctalia hot-reloads it."
 
-# Copy the image's ghostty configuration into your home directory
+# Copy the image's monstar configuration into your home directory
 [group('Desktop')]
-ghostty-config:
+monstar-config:
     #!/usr/bin/env bash
     # The image ships this file in /etc/skel, which only reaches accounts created
-    # after the image was built. On an account that already existed, ghostty uses
-    # whatever the login shell is, so this is how you get the image's config,
-    # including `command = /usr/bin/fish`.
+    # after the image was built. monstar starts $SHELL when `command` is unset,
+    # so this is how you get the image's config, including `command =
+    # direct:/usr/bin/fish`.
     set -euo pipefail
-    dest="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
+    dest="${XDG_CONFIG_HOME:-$HOME/.config}/monstar/config"
     if [ -e "$dest" ]; then
         echo "$dest already exists."
-        echo "Use 'ujust ghostty-config-reset' to overwrite it with the image default."
+        echo "Use 'ujust monstar-config-reset' to overwrite it with the image default."
         exit 1
     fi
-    install -D -m644 /etc/skel/.config/ghostty/config "$dest"
-    # ghostty's own validator: it exits nonzero and prints the file, line and
-    # reason if the config is not usable.
-    ghostty +validate-config --config-file="$dest"
-    echo "Wrote $dest - ghostty picks it up in new windows."
+    install -D -m644 /etc/skel/.config/monstar/config "$dest"
+    if command -v monstar >/dev/null 2>&1; then
+        echo "Wrote $dest - monstar reads it in new windows."
+        echo "Reload an open window with Ctrl+Shift+, or: pkill -USR1 monstar"
+    else
+        echo "Wrote $dest. monstar is not installed on this image yet."
+    fi
 
-# Overwrite ~/.config/ghostty/config with the image's default configuration
+# Overwrite ~/.config/monstar/config with the image's default configuration
 [group('Desktop')]
-ghostty-config-reset:
+monstar-config-reset:
     #!/usr/bin/env bash
     set -euo pipefail
-    dest="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
-    install -D -m644 /etc/skel/.config/ghostty/config "$dest"
-    ghostty +validate-config --config-file="$dest"
+    dest="${XDG_CONFIG_HOME:-$HOME/.config}/monstar/config"
+    install -D -m644 /etc/skel/.config/monstar/config "$dest"
     echo "Restored $dest from the image default."
 
 # Validate the niri configuration and report any errors
@@ -127,7 +129,7 @@ libvirt-setup:
 
 # Change the login shell of the current user (defaults to fish)
 #
-# This image sets fish as the shell for accounts created later, and ghostty is
+# This image sets fish as the shell for accounts created later, and monstar is
 # configured to launch fish regardless of the login shell, so this is only for
 # an account whose /etc/passwd entry still says something else.
 #

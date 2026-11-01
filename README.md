@@ -12,7 +12,8 @@ compositor available as an alternative session:
 | [Umbriel](https://github.com/noctalia-dev/umbriel) | second compositor, from the Noctalia developers, offered as an extra session | Terra, as `umbriel-nightly` |
 | [Noctalia](https://github.com/noctalia-dev/noctalia) | the shell: bar, launcher, notifications, lock screen, wallpaper, control centre, OSDs | Fedora repos (44+) |
 | [noctalia-greeter](https://github.com/noctalia-dev/noctalia-greeter) | the graphical login screen, matched to Noctalia | [Terra](https://terrapkg.com) |
-| [ghostty](https://ghostty.org) | terminal - the default one, with `foot` installed alongside | [Terra](https://terrapkg.com) |
+| [monstar](https://github.com/rockorager/monstar) | the primary terminal - a native Wayland client built on libghostty | upstream release tarball |
+| [foot](https://codeberg.org/dnkl/foot) | the lightweight fallback terminal, on `Mod+Shift+T` | Fedora repos |
 | greetd | minimal login manager daemon | Fedora repos |
 | [fish](https://fishshell.com) | the default shell | Fedora repos |
 | [mise](https://mise.jdx.dev) | polyglot dev tool / runtime version manager | upstream `jdxcode/mise` COPR |
@@ -261,7 +262,7 @@ The most important key bindings (`Mod` is Super):
 
 | Binding | Action |
 | --- | --- |
-| `Mod+T` | terminal (ghostty) |
+| `Mod+T` | terminal (monstar) |
 | `Mod+Shift+T` | terminal (foot, the lightweight fallback) |
 | `Mod+D`, `Mod+Space` | Noctalia launcher |
 | `Mod+S` | Noctalia control centre |
@@ -342,6 +343,7 @@ ujust niri-info          # what is installed, driver state, login shell, units
 ujust niri-config        # copy /etc/niri/config.kdl to ~/.config/niri/config.kdl
 ujust niri-config-reset  # overwrite your copy with the image default
 ujust noctalia-config    # copy the default Noctalia config into your home
+ujust monstar-config     # copy the default monstar config into your home
 ujust niri-validate      # check the niri config for errors
 ujust set-default-shell  # change your login shell (defaults to fish)
 ujust libvirt-setup      # join the libvirt group so virt-manager can manage VMs
@@ -349,7 +351,7 @@ ujust libvirt-setup      # join the libvirt group so virt-manager can manage VMs
 
 What else is on the image, beyond the desktop itself:
 
-* **Everyday**: ghostty and foot, Thunar with its gvfs integrations, imv, mpv,
+* **Everyday**: monstar and foot, Thunar with its gvfs integrations, imv, mpv,
   file-roller, mousepad, zathura, galculator, calibre, transmission-gtk,
   obs-studio, virt-manager with libvirt-daemon-kvm.
 * **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
@@ -535,7 +537,7 @@ layer rules all still apply and only this is layered on top:
 
 * `autostart = ["noctalia", "xdg-user-dirs-update"]`, which is what puts a bar,
   a launcher, a control centre, notifications and a wallpaper on the screen.
-* `Mod+Return` opens ghostty rather than kitty, `Mod+Shift+Return` foot, and
+* `Mod+Return` opens monstar rather than kitty, `Mod+Shift+Return` foot, and
   `Mod+E` Thunar.
 * `Mod+D` launcher (the bare Super key does this too, as upstream intends),
   `Mod+S` control centre, `Mod+Shift+S` settings, `Mod+Ctrl+V` clipboard,
@@ -548,7 +550,8 @@ The lookup order is `~/.config/umbriel/config.toml`, then
 `/usr/share/umbriel/config.toml` (the packaged example). A personal file wins
 completely rather than merging with the others, so `ujust umbriel-config`
 copies the image default into your home to edit, `ujust umbriel-config-reset`
-puts it back, and `ujust umbriel-validate` checks both with `umbriel validate`.
+puts it back, and `ujust umbriel-validate` checks both with
+`umbriel config validate`.
 
 Three differences from niri are worth knowing. `Mod` is Super in a real DRM
 session but **Alt when Umbriel runs nested** inside another compositor. `Mod+T`
@@ -574,21 +577,26 @@ from `/etc/skel`; on an existing account run `ujust noctalia-config`, or just us
 the Settings window. `noctalia config export > my-config.toml` dumps the merged
 config.
 
-**ghostty** reads `~/.config/ghostty/config` and has no system-wide config file
-on Linux, so there is no image-wide one: the file in `/etc/skel` only reaches
-accounts created after the image was built. `ujust ghostty-config` copies it into
-your home, and `ghostty-config-reset` puts it back. It sets
-`command = /usr/bin/fish` so the terminal is fish even when the login shell is
-not, turns off client-side decorations, and picks the font and padding. Validate
-an edit with `ghostty +validate-config`, which prints the file, line and reason
-and exits nonzero when something is wrong.
+**monstar** reads `$XDG_CONFIG_HOME/monstar/config` (there is no system-wide
+path), so the file in `/etc/skel` only reaches accounts created after the image
+was built. `ujust monstar-config` copies it into your home, and
+`monstar-config-reset` puts it back. It sets `command = direct:/usr/bin/fish` so
+the terminal is fish even when the login shell is not, and picks the font and
+padding. There is no CLI validator: reload a running window with `Ctrl+Shift+,`,
+or `pkill -USR1 monstar`.
+
+**foot** remains installed on `Mod+Shift+T` as the lightweight fallback, with the
+image's default in `/etc/skel/.config/foot/foot.ini`. foot also reads
+`/etc/xdg/foot/foot.ini`, but this image does not ship one there, so the skel
+copy only reaches accounts created after the image was built; copy it to
+`~/.config/foot/foot.ini` on an existing account.
 
 Worth knowing, because it is usually the real answer to "why is my terminal
-bash": ghostty leaves `command` unset by default and then uses `$SHELL`, falling
-back to your `passwd` entry. So if your login shell is fish, ghostty opens fish
-with no configuration at all, and if it is not, `ujust set-default-shell` changes
-it everywhere (ghostty, ssh, the console) rather than only in ghostty. The
-`command` key is the narrower fix when you want fish in the terminal only.
+bash": monstar runs `$SHELL` when `command` is unset, falling back to `/bin/sh`.
+So if your login shell is fish, monstar opens fish with no configuration at all,
+and if it is not, `ujust set-default-shell` changes it everywhere (monstar, ssh,
+the console) rather than only in monstar. The `command` key is the narrower fix
+when you want fish in the terminal only.
 
 **fish** reads `~/.config/fish/config.fish`, with system-wide snippets in
 `/etc/fish/conf.d/`.
@@ -600,8 +608,8 @@ login shell lives in `/etc/passwd` on the installed system, not in the image:
 
 * `/etc/default/useradd` has `SHELL=/usr/bin/fish`, so accounts created *after*
   installation get fish.
-* `ghostty` is configured with `command = /usr/bin/fish`, so the default terminal
-  starts fish regardless of what your login shell says.
+* `monstar` is configured with `command = direct:/usr/bin/fish`, so the default
+  terminal starts fish regardless of what your login shell says.
 * For an account that already existed, run `ujust set-default-shell` to change its
   login shell (`ujust set-default-shell /bin/bash` to change it back).
 
@@ -610,7 +618,7 @@ Universal Blue deletes `/usr/bin/chsh` and `/usr/bin/lchsh` from every image
 built on `ublue-os/main`, deliberately: as ublue-os/main#598 puts it, changing
 your login shell can break your account if you rebase to an image that does not
 carry that shell (PR #624, "Stop supporting chsh"). The recommended way to get a
-particular shell is the terminal's own `command` setting, which is the ghostty
+particular shell is the terminal's own `command` setting, which is the monstar
 bullet above.
 
 It is not Fedora's util-linux split, and installing `util-linux` does not undo
@@ -700,7 +708,7 @@ throughout, as in the recipes.
 
 | You would have used | This image ships |
 | --- | --- |
-| gnome-terminal, Konsole | ghostty on `Mod+T`, foot on `Mod+Shift+T` |
+| gnome-terminal, Konsole | monstar on `Mod+T`, foot on `Mod+Shift+T` |
 | Nautilus, Dolphin | Thunar |
 | Image viewer (loupe, Gwenview) | imv (no keybinding; it opens from Thunar or the command line) |
 | Totem, Dragon | mpv |
@@ -833,8 +841,8 @@ and listing what matches, and what each one is there for.
 
 | Component | What needs it | Can it go? |
 | --- | --- | --- |
-| `gtk4`, `libadwaita` | ghostty, file-roller and `xdg-desktop-portal-gnome` | Only by dropping all three |
-| `gtk4-layer-shell` | ghostty alone | Yes - drop ghostty and keep foot |
+| `gtk4`, `libadwaita` | file-roller and `xdg-desktop-portal-gnome` | Only by dropping both |
+| `gtk4-layer-shell` | nothing - neither monstar nor foot uses GTK | It is no longer pulled in |
 | `gnome-desktop3`, `gnome-desktop4` | `xdg-desktop-portal-gnome` | Only by giving up screencast and screen sharing, which niri's own `niri-portals.conf` asks for |
 | `gnome-keyring`, `gcr3`, `gcr-libs` | `niri-portals.conf` names it for `org.freedesktop.impl.portal.Secret`, and it is the only package in Fedora 44 that ships a portal file declaring that interface | No |
 | `file-roller` | the archive manager in `30-apps.yml`, and what `thunar-archive-plugin` integrates with | Yes, but only to one the plugin has a backend for - it ships `ark.tap`, `engrampa.tap` and file-roller's. `engrampa` is +9 packages here, `ark` +78; `xarchiver` is smaller but the plugin has no backend for it |
@@ -986,8 +994,9 @@ The recipes are deliberately small and commented - edit them directly.
   chroot for it (`https://copr.fedorainfracloud.org/coprs/jdxcode/mise/`).
   Also confirm `ghcr.io/ublue-os/akmods` publishes a `main-<release>` tag, and
   that Terra has a `terra<release>` repository with `noctalia-greeter` and
-  `ghostty` in it (<https://repos.fyralabs.com/terra44/repodata/repomd.xml> is
-  the pattern to check).
+  `ghostty-terminfo` in it
+  (<https://repos.fyralabs.com/terra44/repodata/repomd.xml> is the pattern to
+  check).
 * **A different login screen**: the greeter is noctalia-greeter, configured in
   `files/system/etc/greetd/config.toml`. To go back to a text greeter, install
   `tuigreet` and set
@@ -1019,14 +1028,15 @@ for it.
   environment to strip out.
 * **No Quickshell, no Qt/GTK shell**: Noctalia v5 is a native Wayland shell
   written in C++, so there is no Quickshell layer to maintain.
-* **Fedora first, then two external repos**: niri, Noctalia, xwayland-satellite,
+* **Fedora first, then external sources**: niri, Noctalia, xwayland-satellite,
   greetd, wlroots and fish come from the official Fedora 44 repositories, so they
-  are maintained upstream. Two things are not in Fedora: mise (upstream
-  `jdxcode/mise` COPR, whose repository file is removed again after the build
-  with `cleanup: true`) and noctalia-greeter plus ghostty, which come from
+  are maintained upstream. mise comes from its upstream `jdxcode/mise` COPR
+  (whose repository file is removed again after the build with `cleanup: true`),
+  and noctalia-greeter plus ghostty-terminfo come from
   [Terra](https://terrapkg.com). Terra is left enabled so you can install more
   from it - see `recipes/common/05-terra.yml` for what that means for trust and
-  for package priority.
+  for package priority. monstar is the one thing installed outside a package
+  manager: a pinned, checksummed release tarball in `30-apps.yml`.
 * **Weak dependencies off**: keeps the image deterministic and avoids pulling
   in waybar/alacritty/swaylock that niri recommends but Noctalia replaces.
 * **Files go to `/etc`**, not `/usr/etc`: on atomic Fedora the image's `/etc`
@@ -1180,8 +1190,8 @@ for it.
   requirement with `gnome-shell` if you install something that needs one; see the
   `gparted` note in the section above.
 * **The build fails in the Terra modules**: `05-terra.yml` checks that Terra
-  offers `ghostty` and `noctalia-greeter`, and stops there with a message if it
-  does not, so a repository problem fails early and names itself.
+  offers `noctalia-greeter` and `ghostty-terminfo`, and stops there with a
+  message if it does not, so a repository problem fails early and names itself.
 
   Terra's repo file does not work unmodified here, for two separate reasons, and
   the image therefore ships its own copy in
@@ -1206,7 +1216,7 @@ for it.
      ```
 
      after which dnf treats the repository as offering nothing and you get
-     `No match for argument: ghostty`. The signature is not the problem:
+     `No match for argument: noctalia-greeter`. The signature is not the problem:
      `gpg --verify repomd.xml.asc repomd.xml` against
      `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra44` prints `Good signature from "Terra 44
      <security@fyralabs.com>"`, with the fingerprint that key file declares. It
@@ -1268,16 +1278,16 @@ Nothing below requires touching more than one or two files.
 | Base is Universal Blue's desktop-less image, pinned to Fedora 44 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
 | Image names are `fedora-nothic` and `fedora-nothic-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
-| Terminal is **ghostty**, with `foot` as a fallback on `Mod+Shift+T` | `30-apps.yml` + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or drop ghostty to save gtk4 |
+| Terminal is **monstar**, from the upstream release tarball, on `Mod+T`, with **foot** as the fallback on `Mod+Shift+T` | `30-apps.yml` (the script module at the end) + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or replace the pinned tarball with another terminal |
 | There are **two sessions**: niri (the default) and Umbriel | `15-umbriel.yml` installs Terra's `umbriel-nightly`, `files/system/var/lib/noctalia-greeter/greeter.toml` sets the default, and both install a `/usr/share/wayland-sessions/*.desktop` | Change the `default` line in that file, or drop the umbriel module |
-| Umbriel has a **working default configuration** at `/etc/xdg/umbriel/config.toml` (it autostarts Noctalia and rebinds the terminal to ghostty) | `files/system/etc/xdg/umbriel/config.toml`, found through `XDG_CONFIG_DIRS`, including the packaged `/usr/share/umbriel/config.toml` | Delete that file to fall back to the packaged example, which starts nothing and expects kitty |
+| Umbriel has a **working default configuration** at `/etc/xdg/umbriel/config.toml` (it autostarts Noctalia and rebinds the terminal keys to monstar and foot) | `files/system/etc/xdg/umbriel/config.toml`, found through `XDG_CONFIG_DIRS`, including the packaged `/usr/share/umbriel/config.toml` | Delete that file to fall back to the packaged example, which starts nothing and expects kitty |
 | Launcher is Noctalia's built-in one, with `fuzzel` kept as a fallback | the `Mod+D` / `Mod+Space` binds in `niri/config.kdl` | Point those binds at `fuzzel` instead |
 | File manager is Thunar, media is mpv, images are imv | `30-apps.yml` | Drop them for Flatpaks if you want a much smaller image; the section above lists what to add for the things a GNOME or KDE desktop would have provided |
 | File choosers are served by the **GTK** portal backend, not the GNOME one that niri names first | `files/system/etc/xdg/xdg-desktop-portal/niri-portals.conf` | Delete that file to go back to niri's default, but the GNOME backend then needs Nautilus installed (`dnf install nautilus`) before a sandboxed application can open a chooser at all |
 | Power profiles come from `power-profiles-daemon` | the `script` snippet in `20-noctalia.yml` | Switch to `tuned-ppd` if you prefer tuned; the snippet already checks for either |
 | NVIDIA driver flavour is the **proprietary** `nvidia` | `recipes/nvidia/akmods.yml` | One line: `nvidia-driver: nvidia-open` for Blackwell and newer |
 | Terra is added as a package repository and left enabled, with its repo file replaced by one that points `baseurl` at the origin and sets `repo_gpgcheck=0` | `recipes/common/05-terra.yml` + `files/system/etc/yum.repos.d/terra.repo` | Delete the repo file to go back to what Terra ships, or remove the module entirely; see the Terra entry under Troubleshooting |
-| **fish** is the default shell | `etc/default/useradd` (new accounts), the ghostty config (terminals), and `ujust set-default-shell`, which goes through `usermod` because there is no `chsh` (existing accounts) | See the Shells section above |
+| **fish** is the default shell | `etc/default/useradd` (new accounts), the monstar config (terminal), and `ujust set-default-shell`, which goes through `usermod` because there is no `chsh` (existing accounts) | See the Shells section above |
 | Noctalia ships a small default config (dark, top bar, overview type-to-launch, Blueman's tray icon hidden) | `files/system/etc/skel/.config/noctalia/config.toml` | Edit it, or delete it to get pure Noctalia defaults |
 | Shell integration for mise covers bash, zsh and fish | `etc/profile.d/mise.sh`, `etc/fish/conf.d/mise.fish` | Add your shell's own activation line if it is not covered |
 | Images are signed with your own cosign key | `90-final.yml` + the `SIGNING_SECRET` secret | Comment out the `signing` module to build unsigned while experimenting |
@@ -1298,6 +1308,11 @@ it:
 # the niri config parses and passes niri's full schema validation
 niri validate -c /etc/niri/config.kdl
 
+# the terminal is the pinned upstream release, and its TERM resolves
+monstar --version                  # expect monstar 1.0.1
+infocmp xterm-ghostty >/dev/null   # what monstar 1.0.1 sets for child shells
+foot --version                     # the fallback terminal is present
+
 # both recipes still satisfy the BlueBuild recipe/module schemas
 bluebuild validate recipes/recipe.yml
 bluebuild validate recipes/recipe-nvidia.yml
@@ -1316,7 +1331,7 @@ rpm -q umbriel-nightly xdg-desktop-portal-umbriel-nightly
 # own, and carries the packages this image takes from it
 grep -c metalink /etc/yum.repos.d/terra.repo      # expect 0
 grep -c '^repo_gpgcheck=0' /etc/yum.repos.d/terra.repo   # expect 2
-dnf repoquery --repo terra noctalia-greeter ghostty
+dnf repoquery --repo terra noctalia-greeter ghostty-terminfo
 
 # the suggestions under "Development and gaming additions" still exist, and
 # which repository each of them resolves from
@@ -1402,11 +1417,14 @@ environment's fault rather than the image's:
   of `/etc/skel` into the new home directory is incomplete in an unprivileged
   user-namespace chroot - it copies only `.bashrc` there, with stock Fedora 44
   files and stock settings, while a plain `cp -r /etc/skel/.` of the same tree
-  copies everything. So the fish, ghostty and Noctalia defaults are verified as
-  being present in `/etc/skel`, not as arriving in a new home directory.
-* **ghostty's own CLI.** `ghostty +validate-config` produces no output at all in
-  that chroot, so the shipped ghostty config is checked against the keys
-  `Config.zig` declares instead of by running the binary.
+  copies everything. So the fish, monstar, foot and Noctalia defaults are
+  verified as being present in `/etc/skel`, not as arriving in a new home
+  directory.
+* **monstar's binary.** It is taken as published: the release tarball is pinned
+  by version and SHA-256 in `30-apps.yml`, and the image does not build it from
+  source. It is dynamically linked against libraries the image already carries
+  (Wayland, Fontconfig, FreeType, HarfBuzz, xkbcommon), which is the same set
+  `ldd` reports for the tarball here.
 
 Notes that came out of that verification and are easy to trip over:
 
@@ -1439,8 +1457,7 @@ Notes that came out of that verification and are easy to trip over:
   niri requires for screencast) and `gnome-keyring` is the Secret portal backend
   niri's own `niri-portals.conf` asks for. Note that the image does carry GNOME
   *libraries* that niri and Noctalia alone do not need - `gtk4` and
-  `libadwaita` (ghostty hard-requires gtk4, and file-roller and
-  xdg-desktop-portal-gnome need both), `gtk4-layer-shell` (ghostty only), and
+  `libadwaita` (file-roller and xdg-desktop-portal-gnome need both) and
   `gnome-desktop3`/`gnome-desktop4` (xdg-desktop-portal-gnome). There is still
   no GNOME desktop, and no KDE at all; the section above lists exactly what is
   there and what could be removed.
