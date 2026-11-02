@@ -9,6 +9,8 @@
 #   umbriel-nightly              the second compositor (15-umbriel.yml)
 #   ghostty-terminfo             the xterm-ghostty terminfo entry, which monstar
 #                                1.0.1 still sets for child shells (30-apps.yml)
+#   discord                      the native chat client, so its game detection
+#                                can scan /proc (30-apps.yml)
 #   xwayland-satellite           X11 support for niri and Umbriel (10-niri.yml)
 #   bottom, satty, cliphist      a btop-alike, the screenshot annotator and the
 #                                clipboard history (30-apps.yml)
@@ -87,10 +89,11 @@ modules:
     snippets:
       - |
         set -eu
-        # Resolve both packages through the repository definition that the rest
+        # Resolve these packages through the repository definition that the rest
         # of the build will use. A failure here is a Terra problem, not an image
         # problem.
-        found=$(dnf5 repoquery --repo terra --available noctalia-greeter ghostty-terminfo) || {
+        found=$(dnf5 repoquery --repo terra --available \
+          noctalia-greeter ghostty-terminfo discord) || {
           echo "ERROR: Terra could not be queried. Is repos.fyralabs.com reachable?" >&2
           exit 1
         }
@@ -99,10 +102,10 @@ modules:
           echo "       load. Check files/system/etc/yum.repos.d/terra.repo." >&2
           exit 1
         fi
-        for pkg in noctalia-greeter ghostty-terminfo; do
+        for pkg in noctalia-greeter ghostty-terminfo discord; do
           case "$found" in
             *"$pkg"*) : ;;
             *) echo "ERROR: Terra does not offer $pkg." >&2; exit 1 ;;
           esac
         done
-        echo "Terra offers noctalia-greeter and ghostty-terminfo."
+        echo "Terra offers noctalia-greeter, ghostty-terminfo and discord."

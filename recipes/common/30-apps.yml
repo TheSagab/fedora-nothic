@@ -133,6 +133,13 @@ modules:
         - wf-recorder
         - guvcview
 
+        # --- communication -----------------------------------------------
+        # Discord from Terra; Fedora does not package it. The native client
+        # runs unsandboxed, which is what lets its game detection scan /proc -
+        # the Flatpak's PID namespace made that impossible. zenity is its only
+        # new dependency and comes in as a hard requirement.
+        - discord
+
         # --- applications ------------------------------------------------
         # virt-manager plus the daemon it talks to. libvirt-daemon-kvm is the
         # qemu/KVM driver and the qemu stack behind it; Fedora's own preset

@@ -353,7 +353,7 @@ What else is on the image, beyond the desktop itself:
 
 * **Everyday**: monstar and foot, Thunar with its gvfs integrations, imv, mpv,
   file-roller, mousepad, zathura, galculator, calibre, transmission-gtk,
-  obs-studio, virt-manager with libvirt-daemon-kvm.
+  obs-studio, virt-manager with libvirt-daemon-kvm, and Discord.
 * **Desktop plumbing**: btop and bottom, gdu, pavucontrol, blueman, gammastep,
   cliphist, satty, wf-recorder, guvcview, fwupd, grim and slurp, wl-clipboard,
   fuzzel.
@@ -960,8 +960,12 @@ Beyond that, from Fedora: `corectrl` and `openrgb` for AMD tuning and RGB,
 `input-remapper` and `antimicrox` for remapping input devices, and the emulators
 `retroarch`, `dolphin-emu`, `mame` and `scummvm`. From Terra: `xone` for Xbox
 controllers, `moonlight-qt` for game streaming, and `heroic-games-launcher`,
-`prismlauncher`, `steamtinkerlaunch`, `vesktop` and `discord`. From Fedora, the
-other launchers: `lutris`, `bottles`, `wine` and `winetricks`.
+`prismlauncher`, `steamtinkerlaunch` and `vesktop`. From Fedora, the other
+launchers: `lutris`, `bottles`, `wine` and `winetricks`.
+
+Discord is already in the image as the native Terra package (`30-apps.yml`),
+not the Flatpak: the sandbox's PID namespace hides host game processes, so the
+Flatpak cannot do Discord's own game detection.
 
 Steam deserves a note. Terra packages it as `steam`, but the dry run is 183
 packages, 124 MiB to download and 415 MiB installed, because it drags in the
