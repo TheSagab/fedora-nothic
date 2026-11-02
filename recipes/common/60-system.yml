@@ -28,8 +28,6 @@ modules:
   - type: os-release
     properties:
       NAME: Fedora Nothic
-      PRETTY_NAME: Fedora Nothic 44 (niri + Noctalia)
-      VARIANT: Niri + Noctalia
-      VARIANT_ID: niri-noctalia
+      PRETTY_NAME: Fedora Nothic 44
       DEFAULT_HOSTNAME: fedora-nothic
       ID_LIKE: fedora
