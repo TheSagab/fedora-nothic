@@ -10,7 +10,7 @@ compositor available as an alternative session:
 | --- | --- | --- |
 | [niri](https://github.com/niri-wm/niri) | scrollable-tiling Wayland compositor (the "WM"), and the default session | Fedora repos |
 | [Umbriel](https://github.com/noctalia-dev/umbriel) | second compositor, from the Noctalia developers, offered as an extra session | Terra, as `umbriel-nightly` |
-| [Noctalia](https://github.com/noctalia-dev/noctalia) | the shell: bar, launcher, notifications, lock screen, wallpaper, control centre, OSDs | Fedora repos (44+) |
+| [Noctalia](https://github.com/noctalia-dev/noctalia) | the shell: bar, launcher, notifications, lock screen, wallpaper, control centre, OSDs | Fedora repos (45+) |
 | [noctalia-greeter](https://github.com/noctalia-dev/noctalia-greeter) | the graphical login screen, matched to Noctalia | [Terra](https://terrapkg.com) |
 | [monstar](https://github.com/rockorager/monstar) | the primary terminal - a native Wayland client built on libghostty | upstream release tarball |
 | [foot](https://codeberg.org/dnkl/foot) | the lightweight fallback terminal, on `Mod+Shift+T` | Fedora repos |
@@ -156,7 +156,7 @@ Works from Fedora Atomic, Silverblue, Bazzite, Bluefin, Aurora, or another
 BlueBuild image: they are all built on the same Universal Blue lineage, so a
 rebase is a normal operation rather than a migration. Aurora is worth calling out
 because it is the one that looks most different - KDE instead of niri - but at the
-image level it is the same kind of thing: a `bootc` image on Fedora 44 built from
+image level it is the same kind of thing: a `bootc` image on Fedora 45 built from
 `ublue-os/base-main`, exactly like this one.
 
 On a **bootc** system - Aurora, Bazzite, Bluefin and current Fedora Atomic are all
@@ -380,7 +380,7 @@ greeter, and it is its own Wayland compositor: greetd runs
 `/usr/bin/noctalia-greeter-session`, which execs
 `/usr/bin/noctalia-greeter-compositor` - the wlroots compositor bundled in the
 same package - with the login UI as its client. There is no niri, cage or sway
-underneath it. That is why it needs `wlroots` (Fedora 44 ships 0.20.2, which is
+underneath it. That is why it needs `wlroots` (Fedora 45 ships 0.20.2, which is
 what it links against) and a real logind session - Fedora's greetd package
 already provides the latter via `pam_systemd.so` in `/usr/lib/pam.d/greetd-greeter`.
 
@@ -844,7 +844,7 @@ and listing what matches, and what each one is there for.
 | `gtk4`, `libadwaita` | file-roller and `xdg-desktop-portal-gnome` | Only by dropping both |
 | `gtk4-layer-shell` | nothing - neither monstar nor foot uses GTK | It is no longer pulled in |
 | `gnome-desktop3`, `gnome-desktop4` | `xdg-desktop-portal-gnome` | Only by giving up screencast and screen sharing, which niri's own `niri-portals.conf` asks for |
-| `gnome-keyring`, `gcr3`, `gcr-libs` | `niri-portals.conf` names it for `org.freedesktop.impl.portal.Secret`, and it is the only package in Fedora 44 that ships a portal file declaring that interface | No |
+| `gnome-keyring`, `gcr3`, `gcr-libs` | `niri-portals.conf` names it for `org.freedesktop.impl.portal.Secret`, and it is the only package in Fedora 45 that ships a portal file declaring that interface | No |
 | `file-roller` | the archive manager in `30-apps.yml`, and what `thunar-archive-plugin` integrates with | Yes, but only to one the plugin has a backend for - it ships `ark.tap`, `engrampa.tap` and file-roller's. `engrampa` is +9 packages here, `ark` +78; `xarchiver` is smaller but the plugin has no backend for it |
 | `adwaita-cursor-theme` | chosen in `00-base.yml` | It is a choice, not a requirement; a non-GNOME cursor theme can replace it |
 | `adwaita-icon-theme` | required by `gtk3` and `gtk4` | Only with the GTK stack |
@@ -887,17 +887,18 @@ Nothing in this section is installed. It is a shortlist of what could be, with
 two things checked for every entry: that the package actually exists in a
 repository this image already enables, and what it costs to add.
 
-The lists come from `dnf5 repoquery` against Fedora 44 and Terra, matching on
-package name and, where that found nothing, on the binary a package provides
-(`dnf5 repoquery --whatprovides /usr/bin/<name>`). That the empty results are
+The lists were gathered with `dnf5 repoquery` against Fedora 44 and Terra,
+matching on package name and, where that found nothing, on the binary a
+package provides (`dnf5 repoquery --whatprovides /usr/bin/<name>`). That the empty results are
 trustworthy was checked on purpose: `--whatprovides /usr/bin/lazygit` returns
 Terra's `golang-github-jesseduffield-lazygit`, which this image already installs,
 so a lookup that comes back empty really is empty. Terra moves often - everything
 from it is a nightly-style rebuild - so re-run these queries rather than trusting
 the names months from now.
 
-Sizes are what a dry run reported in a Fedora 44 rootfs that already contained
-this image's packages, so they are close to what a real build sees. Adding any of
+Sizes are what a dry run reported in a Fedora 44 rootfs (not re-measured for
+45) that already contained this image's packages, so they are close to what a
+real build sees. Adding any of
 it means a rebuild and a rebase. Development tools belong in
 `recipes/common/40-devtools.yml` next to Zed and helix; gaming packages belong in
 `recipes/common/30-apps.yml`, or in a module of their own if the set grows.
@@ -996,11 +997,12 @@ The recipes are deliberately small and commented - edit them directly.
   check that `noctalia` and `niri` exist for the new release
   (`https://packages.fedoraproject.org/`), and that the `jdxcode/mise` COPR has a
   chroot for it (`https://copr.fedorainfracloud.org/coprs/jdxcode/mise/`).
-  Also confirm `ghcr.io/ublue-os/akmods` publishes a `main-<release>` tag, and
-  that Terra has a `terra<release>` repository with `noctalia-greeter` and
-  `ghostty-terminfo` in it
-  (<https://repos.fyralabs.com/terra44/repodata/repomd.xml> is the pattern to
-  check).
+  Also confirm `ghcr.io/ublue-os/akmods` publishes a `main-<release>` tag,
+  that Terra has a `terra<release>` repository with `noctalia-greeter`,
+  `ghostty-terminfo` and `discord` in it
+  (<https://repos.fyralabs.com/terra45/repodata/repomd.xml> is the pattern to
+  check), and re-check the package list for subpackages that disappear
+  between releases - Fedora 45 dropped `gvfs-archive`.
 * **A different login screen**: the greeter is noctalia-greeter, configured in
   `files/system/etc/greetd/config.toml`. To go back to a text greeter, install
   `tuigreet` and set
@@ -1026,14 +1028,14 @@ for it.
 
 ## Design notes
 
-* **Base image**: `ghcr.io/ublue-os/base-main`, pinned to Fedora 44. It is
+* **Base image**: `ghcr.io/ublue-os/base-main`, pinned to Fedora 45. It is
   Universal Blue's desktop-less base: codecs, hardware acceleration, distrobox,
   toolbox, `just`/`ujust`, and the ublue signing keys - but no desktop
   environment to strip out.
 * **No Quickshell, no Qt/GTK shell**: Noctalia v5 is a native Wayland shell
   written in C++, so there is no Quickshell layer to maintain.
 * **Fedora first, then external sources**: niri, Noctalia, xwayland-satellite,
-  greetd, wlroots and fish come from the official Fedora 44 repositories, so they
+  greetd, wlroots and fish come from the official Fedora 45 repositories, so they
   are maintained upstream. mise comes from its upstream `jdxcode/mise` COPR
   (whose repository file is removed again after the build with `cleanup: true`),
   and noctalia-greeter plus ghostty-terminfo come from
@@ -1071,7 +1073,7 @@ for it.
   `ghcr.io/ublue-os/base-main` already provides changes nothing, so those are not
   repeated; where a whole group is inherited, the module's comments name it. The
   check is
-  `podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n'`,
+  `podman run --rm ghcr.io/ublue-os/base-main:45 rpm -qa --qf '%{NAME}\n'`,
   because `dnf` cannot answer it: some of what the base carries is a dependency
   of something else rather than an explicit choice, while some of it (`polkit`,
   `cpio`, `podman`, `skopeo`) is a hard requirement of a base component and so
@@ -1222,7 +1224,7 @@ for it.
      after which dnf treats the repository as offering nothing and you get
      `No match for argument: noctalia-greeter`. The signature is not the problem:
      `gpg --verify repomd.xml.asc repomd.xml` against
-     `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra44` prints `Good signature from "Terra 44
+     `/etc/pki/rpm-gpg/RPM-GPG-KEY-terra45` prints `Good signature from "Terra 45
      <security@fyralabs.com>"`, with the fingerprint that key file declares. It
      is about who imported the key: once a dnf command has imported it itself,
      `repo_gpgcheck=1` starts working, but `rpm --import` alone does not satisfy
@@ -1244,11 +1246,11 @@ for it.
   The error names the requirement, which is the fastest diagnostic:
 
   ```
-  nothing provides kernel-uname-r = 7.2.7-200.fc44.x86_64 needed by kmod-nvidia-3:...
+  nothing provides kernel-uname-r = 7.2.15-300.fc45.x86_64 needed by kmod-nvidia-3:...
   ```
 
   Compare that version against `ostree.linux` on
-  `ghcr.io/ublue-os/base-main:44` and on the akmods image. This is a transient
+  `ghcr.io/ublue-os/base-main:45` and on the akmods image. This is a transient
   window after a Fedora kernel bump: upstream `ublue-os/akmods` has not caught up
   yet. Wait for their next build and re-run. Note this image never pulls a kernel
   of its own - the resolved package set contains no `kernel*` package, only
@@ -1279,7 +1281,7 @@ Nothing below requires touching more than one or two files.
 
 | Assumption | Where it lives | How to change it |
 | --- | --- | --- |
-| Base is Universal Blue's desktop-less image, pinned to Fedora 44 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
+| Base is Universal Blue's desktop-less image, pinned to Fedora 45 | `base-image` / `image-version` in both recipes | Bump `image-version`; see "Move to the next Fedora release" under Customising |
 | Image names are `fedora-nothic` and `fedora-nothic-nvidia` | `name:` in both recipes, `matrix.recipe` in `build.yml`, `matrix.image` in `build-disk.yml` | Rename in all four places, plus the cosmetic fields in `60-system.yml` |
 | Greeter is **noctalia-greeter**, from Terra | `files/system/etc/greetd/config.toml` + the `greetd`/`noctalia-greeter` entries in `10-niri.yml` | Point `command` at `tuigreet` instead (install it first), or at `/usr/bin/niri-session` for autologin-style direct start |
 | Terminal is **monstar**, from the upstream release tarball, on `Mod+T`, with **foot** as the fallback on `Mod+Shift+T` | `30-apps.yml` (the script module at the end) + the `Mod+T` / `Mod+Shift+T` binds in `niri/config.kdl` | Swap the binds, or replace the pinned tarball with another terminal |
@@ -1301,12 +1303,19 @@ one-line edit.
 
 ## Re-checking this configuration yourself
 
-The repository was verified against the real Fedora 44 artefacts rather than by
-inspection: the real `niri` binary, the real `bluebuild` CLI, every module this
-recipe uses executed with its real payload in a Fedora 44 rootfs, and the real
-`dnf5` solver. That covers all eight modules of the plain image plus `akmods`
-and `initramfs` for the NVIDIA one. On a running system you can repeat most of
-it:
+The repository was originally verified against the real Fedora 44 artefacts
+rather than by inspection: the real `niri` binary, the real `bluebuild` CLI,
+every module this recipe uses executed with its real payload in a Fedora 44
+rootfs, and the real `dnf5` solver. That covers all eight modules of the plain image plus `akmods`
+and `initramfs` for the NVIDIA one.
+
+The Fedora 45 bump was checked against the published artefacts instead of a
+full rebuild: `base-main:45` and `akmods:main-45` both report the same
+`7.2.15-300.fc45.x86_64` kernel, Fedora 45 carries niri, Noctalia, greetd,
+wlroots 0.20.2 and xwayland-satellite, Terra 45 carries every package this
+image takes from it, and the mise COPR has a `fedora-45` chroot.
+
+On a running system you can repeat most of it:
 
 ```bash
 # the niri config parses and passes niri's full schema validation
@@ -1335,7 +1344,7 @@ rpm -q umbriel-nightly xdg-desktop-portal-umbriel-nightly
 # own, and carries the packages this image takes from it
 grep -c metalink /etc/yum.repos.d/terra.repo      # expect 0
 grep -c '^repo_gpgcheck=0' /etc/yum.repos.d/terra.repo   # expect 2
-dnf repoquery --repo terra noctalia-greeter ghostty-terminfo
+dnf repoquery --repo terra noctalia-greeter ghostty-terminfo discord
 
 # the suggestions under "Development and gaming additions" still exist, and
 # which repository each of them resolves from
@@ -1372,7 +1381,7 @@ useradd -D | grep ^SHELL
 
 # the package set: how heavy it is, and that there is no desktop in it. Feed it
 # every package the recipes/common dnf modules name; this is where the numbers
-# in the Design notes and in 30-apps.yml come from. Run it on a Fedora 44 host.
+# in the Design notes and in 30-apps.yml come from. Run it on a Fedora 45 host.
 #
 # Two caveats on those numbers. They resolve against an EMPTY root, so they count
 # everything the base image already provides as if this image had added it: the
@@ -1380,14 +1389,14 @@ useradd -D | grep ^SHELL
 # recipes/common/ has since been trimmed of the entries the base image already
 # provides, so the figures as written over-count those as well. Re-run the
 # command above for the current total.
-dnf5 --installroot=/var/tmp/checkroot --releasever=44 --use-host-config \
+dnf5 --installroot=/var/tmp/checkroot --releasever=45 --use-host-config \
   --assumeno install --setopt=install_weak_deps=False <packages>
 
 # what the base image itself provides, which is what every package list in
 # recipes/common/ is a delta against. This is the check that decides whether an
 # entry is real or a no-op, and dnf cannot do it: some of what the base carries
 # is there as a dependency of something else rather than by name.
-podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n' | sort
+podman run --rm ghcr.io/ublue-os/base-main:45 rpm -qa --qf '%{NAME}\n' | sort
 
 # the marginal cost of one extra package, which is how the tables under
 # "What a GNOME or KDE desktop would give you" were measured: resolve the
@@ -1465,9 +1474,9 @@ Notes that came out of that verification and are easy to trip over:
   `gnome-desktop3`/`gnome-desktop4` (xdg-desktop-portal-gnome). There is still
   no GNOME desktop, and no KDE at all; the section above lists exactly what is
   there and what could be removed.
-* For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-44` and
-  `ghcr.io/ublue-os/base-main:44` both report
-  `ostree.linux = 7.2.7-200.fc44.x86_64`, i.e. the kmod RPMs are built for the
+* For the NVIDIA variant, `ghcr.io/ublue-os/akmods:main-45` and
+  `ghcr.io/ublue-os/base-main:45` both report
+  `ostree.linux = 7.2.15-300.fc45.x86_64`, i.e. the kmod RPMs are built for the
   exact kernel the base ships. If those ever diverge you get the depsolve error
   mentioned in Troubleshooting - check `rpm-ostree status`/`bootc status` for the
   running kernel and compare with the akmods image tag.

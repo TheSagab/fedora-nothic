@@ -35,7 +35,7 @@
 # yet with which to verify it - it is a chicken-and-egg bootstrap, not a general
 # relaxation. The key is imported into the rpm keyring immediately afterwards, and
 # gpgcheck=1 is on for the repository, so every package pulled from Terra from then
-# on is verified against it. $releasever is dnf's own variable (44 here), left in
+# on is verified against it. $releasever is dnf's own variable (45 here), left in
 # single quotes so the shell does not eat it.
 #
 # The BlueBuild `dnf` module cannot express --repofrompath, hence the snippet.

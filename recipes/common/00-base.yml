@@ -11,7 +11,7 @@
 # check - some of what it carries is a dependency of something else it installs
 # rather than an explicit choice, and dnf cannot tell you which.
 #
-#   podman run --rm ghcr.io/ublue-os/base-main:44 rpm -qa --qf '%{NAME}\n'
+#   podman run --rm ghcr.io/ublue-os/base-main:45 rpm -qa --qf '%{NAME}\n'
 
 modules:
   - type: dnf

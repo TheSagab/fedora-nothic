@@ -28,6 +28,6 @@ modules:
   - type: os-release
     properties:
       NAME: Fedora Nothic
-      PRETTY_NAME: Fedora Nothic 44
+      PRETTY_NAME: Fedora Nothic 45
       DEFAULT_HOSTNAME: fedora-nothic
       ID_LIKE: fedora

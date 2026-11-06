@@ -79,7 +79,9 @@ modules:
         - gvfs-smb
         - gvfs-nfs
         - gvfs-fuse
-        - gvfs-archive
+        # gvfs-archive is not packaged in Fedora 45: the archive backend was
+        # dropped. Browsing an archive as a folder is gone with it; Thunar's
+        # "Extract here" still works through thunar-archive-plugin.
 
         # --- media and archives -----------------------------------------
         # 7zip, unzip and cpio are already in the base image: cpio is required

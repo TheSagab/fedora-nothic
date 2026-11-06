@@ -1,6 +1,10 @@
 # Terra (https://terrapkg.com), with two deliberate changes from the file that
 # the terra-release RPM installs.
 #
+# The measurements below were taken on Fedora 44. The baseurl and key paths use
+# dnf's $releasever, so the file needs no change for Fedora 45; re-check the
+# repo_gpgcheck note if Terra changes how it imports its key.
+#
 # 1. baseurl points straight at repos.fyralabs.com instead of the metalink.
 #
 #    The metalink advertises the checksum of the *current* repomd.xml, but the

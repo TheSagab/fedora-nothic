@@ -11,12 +11,12 @@
 name: fedora-nothic
 description: Fedora Atomic (Universal Blue base) with niri, the Noctalia shell and mise.
 
-# Universal Blue's desktop-less base. Fedora 44, includes codecs, hardware
+# Universal Blue's desktop-less base. Fedora 45, includes codecs, hardware
 # acceleration, distrobox/toolbox, just/ujust and the ublue signing keys.
 base-image: ghcr.io/ublue-os/base-main
 # Pin the Fedora release instead of "latest" so the image only moves when we
 # say so. Bump this (and re-check packages) to move to a new Fedora.
-image-version: 44
+image-version: 45
 
 # Everything shared between the plain and the NVIDIA variant.
 modules:

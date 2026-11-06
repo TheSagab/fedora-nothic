@@ -5,7 +5,7 @@
 # wallpaper, control center, ...). It is a plain Wayland client, so it is
 # installed from the Fedora repositories and started by niri.
 #
-# Fedora 44+ only. On older releases use the LionHeartP COPR / build from
+# Fedora 45+ only. On older releases use the LionHeartP COPR / build from
 # source - see https://docs.noctalia.dev/noctalia/getting-started/installation/
 
 modules:
