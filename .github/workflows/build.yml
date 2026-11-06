@@ -43,5 +43,12 @@ jobs:
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
 
+          # Pin the BlueBuild CLI. The action otherwise pulls the floating
+          # `v0.9` installer tag, which can resolve to v0.9.38-v0.9.40 - the
+          # builds affected by GHSA-5c53-pm9x-v2gr (a TOCTOU between pushing
+          # an image and fetching its digest to sign). v0.9.41 is the fixed
+          # build; do not drop this until the floating tag is fixed upstream.
+          cli_version: v0.9.41
+
           # Frees up space on the GitHub runner; the NVIDIA image is large.
           maximize_build_space: true
