@@ -40,11 +40,12 @@
 #
 # The BlueBuild `dnf` module cannot express --repofrompath, hence the snippet.
 #
-# The second module replaces the repo file that RPM just installed with our own
-# copy: baseurl points at repos.fyralabs.com instead of the metalink, and
-# repo_gpgcheck is 0. The comments at the top of that file explain both changes
-# with the measurements behind them; gpgcheck=1 is untouched, so every package
-# from Terra is still signature checked.
+# The second module installs our own copy at /etc/yum.repos.d/terra.repo, which
+# overrides the vendor copy (under /etc/yum.repos.d on Fedora 44 and under
+# /usr/share/dnf5/repos.d on Fedora 45): baseurl points at repos.fyralabs.com
+# instead of the metalink, and repo_gpgcheck is 0. The comments at the top of
+# that file explain both changes with the measurements behind them; gpgcheck=1
+# is untouched, so every package from Terra is still signature checked.
 #
 # The third module is the check: it asks Terra for the packages this image takes
 # from it that are needed by the early modules, so that a repository problem
@@ -72,7 +73,14 @@ modules:
           --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
           terra-release
         # Fail here, with a clear reason, rather than in a later module.
-        grep -q '^enabled=1' /etc/yum.repos.d/terra.repo
+        # Fedora 45's terra-release installs its repo file under
+        # /usr/share/dnf5/repos.d; older releases use /etc/yum.repos.d. Our own
+        # copy lands in /etc/yum.repos.d in the next module.
+        if ! grep -qs '^enabled=1' /etc/yum.repos.d/terra.repo \
+             /usr/share/dnf5/repos.d/terra.repo; then
+          echo "ERROR: Terra's repository file is not enabled." >&2
+          exit 1
+        fi
         # Import Terra's key into the rpm keyring now. Packages from Terra are
         # signature checked (gpgcheck=1), and dnf would otherwise stop to ask,
         # which a build cannot answer. rpm does not know dnf's $releasever, so
