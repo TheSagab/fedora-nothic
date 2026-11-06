@@ -46,19 +46,19 @@ show_cheatsheet = true
 # Upstream binds Mod+Return to kitty. This image ships monstar as the primary
 # terminal, with foot as the fallback, so the terminal keys actually open a
 # terminal.
-"Mod+Return" = { action = "spawn:monstar", repeat = false }
-"Mod+Shift+Return" = "spawn:foot"
-"Mod+E" = "spawn:thunar"
+"Mod+Return" = { action = "spawn monstar", repeat = false }
+"Mod+Shift+Return" = "spawn foot"
+"Mod+E" = "spawn thunar"
 
 # --- Noctalia panels ------------------------------------------------------
 # These are the panel ids Noctalia documents for Umbriel. Umbriel's own
 # defaults already bind the bare Super key to the launcher; Mod+D is added
 # because that is the key this image uses under niri.
-"Mod+D" = { action = "spawn:noctalia msg panel-toggle launcher", repeat = false }
-"Mod+S" = { action = "spawn:noctalia msg panel-toggle control-center", repeat = false }
-"Mod+Shift+S" = { action = "spawn:noctalia msg settings-toggle", repeat = false }
-"Mod+Ctrl+V" = { action = "spawn:noctalia msg panel-toggle clipboard", repeat = false }
-"Mod+W" = { action = "spawn:noctalia msg panel-toggle wallpaper", repeat = false }
+"Mod+D" = { action = "spawn noctalia msg panel-toggle launcher", repeat = false }
+"Mod+S" = { action = "spawn noctalia msg panel-toggle control-center", repeat = false }
+"Mod+Shift+S" = { action = "spawn noctalia msg settings-toggle", repeat = false }
+"Mod+Ctrl+V" = { action = "spawn noctalia msg panel-toggle clipboard", repeat = false }
+"Mod+W" = { action = "spawn noctalia msg panel-toggle wallpaper", repeat = false }
 # "hold" is the form Noctalia documents, for both niri and Hyprland. The
 # switcher takes an exclusive keyboard layer surface when it maps, so on a quick
 # tap the Alt release can arrive before it has focus and is then never seen, which
@@ -68,31 +68,31 @@ show_cheatsheet = true
 # It needs noctalia 5.2.1 or newer; older builds accept the argument and ignore
 # it (check `noctalia --version`). Keeping it is harmless either way, and it
 # starts working as soon as the package moves.
-"Alt+Tab" = { action = "spawn:noctalia msg window-switcher hold", repeat = false }
-"Super+Alt+L" = { action = "spawn:noctalia msg session lock", repeat = false }
+"Alt+Tab" = { action = "spawn noctalia msg window-switcher hold", repeat = false }
+"Super+Alt+L" = { action = "spawn noctalia msg session lock", repeat = false }
 
 # --- screenshots ----------------------------------------------------------
 # The same keys as the niri session. Print is the interactive region picker,
 # Ctrl+Print the whole monitor, Alt+Print freezes the screen so you can draw
 # on it. Noctalia writes them to its own screenshot directory, which is set in
 # Noctalia's settings rather than here.
-"Print" = { action = "spawn:noctalia msg screenshot-region", repeat = false }
-"Ctrl+Print" = { action = "spawn:noctalia msg screenshot-fullscreen", repeat = false }
-"Alt+Print" = { action = "spawn:noctalia msg screenshot-annotate", repeat = false }
+"Print" = { action = "spawn noctalia msg screenshot-region", repeat = false }
+"Ctrl+Print" = { action = "spawn noctalia msg screenshot-fullscreen", repeat = false }
+"Alt+Print" = { action = "spawn noctalia msg screenshot-annotate", repeat = false }
 
 # --- media and brightness -------------------------------------------------
 # The same actions as the niri session, so the hardware keys behave the same
 # way in both. These are deliberately repeating binds: hold the key and the
 # volume keeps stepping. allow_when_locked is for the keys that should still
 # work at the lock screen.
-"XF86AudioRaiseVolume" = { action = "spawn:noctalia msg volume-up", allow_when_locked = true }
-"XF86AudioLowerVolume" = { action = "spawn:noctalia msg volume-down", allow_when_locked = true }
-"XF86AudioMute" = { action = "spawn:noctalia msg volume-mute", allow_when_locked = true }
-"XF86AudioMicMute" = { action = "spawn:wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle", allow_when_locked = true }
-"XF86MonBrightnessUp" = { action = "spawn:noctalia msg brightness-up", allow_when_locked = true }
-"XF86MonBrightnessDown" = { action = "spawn:noctalia msg brightness-down", allow_when_locked = true }
-"XF86AudioPlay" = { action = "spawn:playerctl play-pause", allow_when_locked = true }
-"XF86AudioPause" = { action = "spawn:playerctl play-pause", allow_when_locked = true }
-"XF86AudioStop" = { action = "spawn:playerctl stop", allow_when_locked = true }
-"XF86AudioPrev" = { action = "spawn:playerctl previous", allow_when_locked = true }
-"XF86AudioNext" = { action = "spawn:playerctl next", allow_when_locked = true }
+"XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn noctalia msg volume-down", allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn noctalia msg volume-mute", allow_when_locked = true }
+"XF86AudioMicMute" = { action = "spawn wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle", allow_when_locked = true }
+"XF86MonBrightnessUp" = { action = "spawn noctalia msg brightness-up", allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn noctalia msg brightness-down", allow_when_locked = true }
+"XF86AudioPlay" = { action = "spawn playerctl play-pause", allow_when_locked = true }
+"XF86AudioPause" = { action = "spawn playerctl play-pause", allow_when_locked = true }
+"XF86AudioStop" = { action = "spawn playerctl stop", allow_when_locked = true }
+"XF86AudioPrev" = { action = "spawn playerctl previous", allow_when_locked = true }
+"XF86AudioNext" = { action = "spawn playerctl next", allow_when_locked = true }
