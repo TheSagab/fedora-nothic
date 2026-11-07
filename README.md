@@ -1186,6 +1186,24 @@ for it.
   machine that `hold` drives does not exist before 5.2.1 at all
   (`src/shell/switcher/window_switcher_shortcut_state.h` first appears there),
   and the older builds' `window-switcher` handler takes no action argument.
+* **Steam notifications appear in the middle of the screen**: Steam's toasts
+  are its own floating windows, not desktop notifications routed through
+  Noctalia, so niri centers them. The shipped config pins them to the
+  bottom-right corner:
+
+  ```
+  window-rule {
+      match app-id="steam"
+      match title=r#"^notificationtoasts_\d+_desktop$"#
+      default-floating-position x=10 y=10 relative-to="bottom-right"
+      open-focused false
+  }
+  ```
+
+  This is the workaround from niri's
+  [application-issues wiki](https://github.com/niri-wm/niri/wiki/Application-Issues#steam).
+  If a toast still lands in the middle, run `niri msg windows` while one is
+  visible and adjust the title match.
 * **A graphical password prompt never appears** (mounting a disk in Thunar,
   running `gparted`, anything that asks polkit): the polkit *authentication
   agent* is what draws that prompt, and it is part of the desktop shell, not of

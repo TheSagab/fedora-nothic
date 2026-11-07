@@ -196,6 +196,18 @@ window-rule {
     open-floating true
 }
 
+// Steam's notification toasts are its own floating windows, not desktop
+// notifications routed through Noctalia, so niri opens them in the middle of
+// the screen. Pin them to the bottom-right corner instead. This is the
+// workaround documented in niri's application-issues wiki; the title is the
+// toast window Steam creates for each notification.
+window-rule {
+    match app-id="steam"
+    match title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+}
+
 // ---------------------------------------------------------------------------
 // Layer rules (Noctalia surfaces)
 // ---------------------------------------------------------------------------
